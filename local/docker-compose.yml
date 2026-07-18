@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vms
+      POSTGRES_PASSWORD: vms_password
+      POSTGRES_DB: vmsdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vms -d vmsdb"]
+      interval: 5s
+      retries: 10
+
+  mailhog:                      # local email testing UI at http://localhost:8025
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+  backend:
+    build: ./backend
+    environment:
+      PORT: 4000
+      DB_HOST: db
+      DB_USER: vms
+      DB_PASSWORD: vms_password
+      DB_NAME: vmsdb
+      JWT_SECRET: local-dev-secret
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:4000/api
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

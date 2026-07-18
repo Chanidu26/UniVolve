@@ -1,0 +1,81 @@
+* { box-sizing: border-box; margin: 0; }
+body { font-family: system-ui, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+/* ── NAV ── */
+nav { background: #1a1a5e; color: #fff; padding: 12px 24px; display: flex; gap: 16px; align-items: center; }
+nav a { color: #cfd8ff; text-decoration: none; font-size: 14px; }
+nav a:hover { color: #fff; }
+.nav-user { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.nav-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid #4f5fcf; cursor: pointer; }
+.nav-avatar-placeholder { width: 34px; height: 34px; border-radius: 50%; background: #4f5fcf; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; }
+
+/* ── LAYOUT ── */
+.container { max-width: 980px; margin: 28px auto; padding: 0 16px; }
+
+/* ── CARDS ── */
+.card { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+
+/* ── BUTTONS ── */
+button { background: #1a1a5e; color: #fff; border: 0; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+button:hover { opacity: .88; }
+button.secondary { background: #5c6bc0; }
+button.danger { background: #c0392b; }
+button.ghost { background: transparent; color: #1a1a5e; border: 1px solid #1a1a5e; }
+button:disabled { background: #b0b8d1; cursor: not-allowed; }
+
+/* ── FORMS ── */
+input, select, textarea { width: 100%; padding: 9px 12px; margin: 4px 0 14px; border: 1px solid #d0d5e0; border-radius: 6px; font-size: 14px; }
+label { font-size: 13px; color: #555; font-weight: 500; }
+
+/* ── BADGES ── */
+.badge { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+.badge.PENDING  { background: #fff3cd; color: #856404; }
+.badge.APPROVED { background: #d1e7dd; color: #0a5c36; }
+.badge.REJECTED { background: #f8d7da; color: #842029; }
+.badge.DRAFT     { background: #e2e3e5; color: #41464b; }
+.badge.PUBLISHED { background: #cfe2ff; color: #084298; }
+.badge.CLOSED    { background: #f8d7da; color: #842029; }
+
+/* ── TABLE ── */
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; padding: 10px 8px; border-bottom: 2px solid #e8eaf0; color: #555; font-size: 12px; text-transform: uppercase; }
+td { padding: 10px 8px; border-bottom: 1px solid #f0f2f5; vertical-align: middle; }
+
+/* ── AVATAR ── */
+.avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.avatar-sm { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+.avatar-lg { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
+.avatar-placeholder { border-radius: 50%; background: #5c6bc0; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
+
+/* ── USER CHIP (name + photo inline) ── */
+.user-chip { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.user-chip:hover .chip-name { text-decoration: underline; }
+.chip-name { font-weight: 500; font-size: 14px; }
+
+/* ── MODAL ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; display: flex; align-items: center; justify-content: center; }
+.modal { background: #fff; border-radius: 12px; width: 480px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; }
+.modal-header { padding: 16px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+.modal-body { overflow-y: auto; padding: 16px 20px; flex: 1; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ── VOLUNTEER PICKER ── */
+.volunteer-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.volunteer-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 2px solid #e8eaf0; border-radius: 8px; cursor: pointer; transition: border-color .15s; }
+.volunteer-item:hover { border-color: #5c6bc0; background: #f5f6ff; }
+.volunteer-item.selected { border-color: #1a1a5e; background: #eef0ff; }
+.volunteer-info { flex: 1; }
+.volunteer-info .name { font-weight: 600; font-size: 14px; }
+.volunteer-info .email { font-size: 12px; color: #777; }
+.volunteer-info .skills { font-size: 12px; color: #5c6bc0; margin-top: 2px; }
+
+/* ── PROFILE PAGE ── */
+.profile-header { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
+.profile-stats { display: flex; gap: 24px; margin-top: 8px; }
+.stat { text-align: center; }
+.stat .num { font-size: 22px; font-weight: 700; color: #1a1a5e; }
+.stat .lbl { font-size: 12px; color: #777; }
+.skill-tag { display: inline-block; background: #eef0ff; color: #1a1a5e; border-radius: 14px; padding: 3px 10px; font-size: 12px; margin: 2px; }
+
+/* ── SEARCH ── */
+.search-box { padding: 9px 12px; border: 1px solid #d0d5e0; border-radius: 6px; width: 100%; margin-bottom: 12px; font-size: 14px; }
