@@ -36,6 +36,8 @@ services:
       SMTP_PORT: 1025
     ports:
       - "4000:4000"
+    volumes:
+      - uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -52,3 +54,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:

@@ -1,4 +1,0 @@
-db_admin_password = "ChangeMe-Strong-Passw0rd!"
-b2c_tenant_name   = "vmsuniversity"
-b2c_tenant_id     = "00000000-0000-0000-0000-000000000000"
-b2c_client_id     = "11111111-1111-1111-1111-111111111111"

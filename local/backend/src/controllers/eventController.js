@@ -43,7 +43,6 @@ exports.remove = async (req, res) => {
   res.status(204).end();
 };
 
-// Organizer of THIS event or super admin
 exports.requireEventOrganizer = async (req, res, next) => {
   if (req.user.system_role === 'SUPER_ADMIN') return next();
   const { rows } = await pool.query('SELECT organizer_id FROM events WHERE id=$1', [req.params.id]);

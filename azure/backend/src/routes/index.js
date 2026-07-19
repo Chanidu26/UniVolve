@@ -10,6 +10,7 @@ router.post('/auth/register', auth.register);
 router.post('/auth/login', auth.login);
 router.get('/auth/me', authenticate, auth.me);
 router.put('/auth/me', authenticate, auth.updateProfile);
+router.post('/auth/upload-photo', authenticate, auth.uploadPhoto);
 
 // Users
 router.get('/users', authenticate, requireRole('SUPER_ADMIN'), auth.listVolunteers);

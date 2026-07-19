@@ -1,14 +1,48 @@
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 const pool = require('../db/pool');
 const { sign } = require('../middleware/auth');
 
 const PROFILE_COLS = 'id, email, full_name, system_role, bio, skills, portfolio_links, profile_picture_url, created_at';
 
-// Helper: ensure value is always a proper array for text[] columns
 const toArray = (val) => {
   if (!val) return [];
   if (Array.isArray(val)) return val;
   return val.split(',').map(s => s.trim()).filter(Boolean);
+};
+
+// --- Multer: store uploads in /app/uploads, 2MB limit, images only ---
+const uploadDir = process.env.UPLOAD_DIR || '/app/uploads';
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `avatar_${req.user.sub}_${Date.now()}${ext}`);
+  },
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['.jpg','.jpeg','.png','.webp','.gif'];
+    cb(null, allowed.includes(path.extname(file.originalname).toLowerCase()));
+  },
+}).single('photo');
+
+exports.uploadPhoto = (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const url = `/uploads/${req.file.filename}`;
+    const { rows } = await pool.query(
+      `UPDATE users SET profile_picture_url=$1 WHERE id=$2 RETURNING ${PROFILE_COLS}`,
+      [url, req.user.sub]);
+    res.json({ url, user: rows[0] });
+  });
 };
 
 exports.register = async (req, res) => {
@@ -18,8 +52,7 @@ exports.register = async (req, res) => {
   try {
     const { rows } = await pool.query(
       `INSERT INTO users (email, password_hash, full_name, bio, skills, portfolio_links, profile_picture_url)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)
-       RETURNING ${PROFILE_COLS}`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING ${PROFILE_COLS}`,
       [email, hash, full_name, bio || null, toArray(skills), toArray(portfolio_links), profile_picture_url || null]);
     res.status(201).json({ user: rows[0], token: sign(rows[0]) });
   } catch (e) {
@@ -68,7 +101,6 @@ exports.updateProfile = async (req, res) => {
   res.json(rows[0]);
 };
 
-// List all volunteers (for organizer assignment picker)
 exports.listVolunteers = async (req, res) => {
   const { rows } = await pool.query(
     `SELECT id, email, full_name, bio, skills, profile_picture_url

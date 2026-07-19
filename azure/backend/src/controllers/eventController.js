@@ -12,7 +12,7 @@ exports.list = async (req, res) => {
     LEFT JOIN users u ON u.id = e.organizer_id
     LEFT JOIN event_roles r ON r.event_id = e.id
     ${admin ? '' : "WHERE e.status = 'PUBLISHED'"}
-    GROUP BY e.id, u.full_name
+    GROUP BY e.id, u.full_name, u.profile_picture_url
     ORDER BY e.event_date ASC`);
   res.json(rows);
 };
@@ -43,7 +43,6 @@ exports.remove = async (req, res) => {
   res.status(204).end();
 };
 
-// Organizer of THIS event or super admin
 exports.requireEventOrganizer = async (req, res, next) => {
   if (req.user.system_role === 'SUPER_ADMIN') return next();
   const { rows } = await pool.query('SELECT organizer_id FROM events WHERE id=$1', [req.params.id]);

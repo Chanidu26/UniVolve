@@ -1,11 +1,17 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const routes = require('./routes');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Serve uploaded photos statically
+const uploadDir = process.env.UPLOAD_DIR || '/app/uploads';
+app.use('/uploads', express.static(uploadDir));
+
 app.get('/health', (_, res) => res.json({ status: 'ok' }));
 app.use('/api', routes);
 
