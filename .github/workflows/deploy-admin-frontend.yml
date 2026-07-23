@@ -1,0 +1,22 @@
+name: Deploy Admin Frontend to Azure Static Web Apps
+on:
+  push:
+    branches: [main]
+    paths: ["azure/admin-frontend/**"]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.SWA_ADMIN_DEPLOY_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: azure/admin-frontend
+          output_location: dist
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_B2C_TENANT: ${{ secrets.VITE_B2C_TENANT }}
+          VITE_CLIENT_ID: ${{ secrets.VITE_ADMIN_CLIENT_ID }}
+          VITE_API_SCOPE: ${{ secrets.VITE_API_SCOPE }}

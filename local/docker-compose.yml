@@ -42,13 +42,23 @@ services:
       db:
         condition: service_healthy
 
-  frontend:
+  volunteer-frontend:
     build:
-      context: ./frontend
+      context: ./volunteer-frontend
       args:
         VITE_API_URL: http://localhost:4000/api
     ports:
       - "3000:80"
+    depends_on:
+      - backend
+
+  admin-frontend:
+    build:
+      context: ./admin-frontend
+      args:
+        VITE_API_URL: http://localhost:4000/api
+    ports:
+      - "3001:80"
     depends_on:
       - backend
 

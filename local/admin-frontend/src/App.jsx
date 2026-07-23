@@ -1,0 +1,44 @@
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import Login from './pages/Login.jsx';
+import AdminEvents from './pages/AdminEvents.jsx';
+import ManageEvent from './pages/ManageEvent.jsx';
+import ViewProfile from './pages/ViewProfile.jsx';
+import Avatar from './components/Avatar.jsx';
+import api from './api/client.js';
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+  const token = localStorage.getItem('vms_token');
+
+  useEffect(() => {
+    if (token) api.get('/auth/me').then(r => setUser(r.data)).catch(logout);
+  }, [token]);
+
+  const logout = () => { localStorage.removeItem('vms_token'); setUser(null); navigate('/login'); };
+
+  return (
+    <>
+      <nav>
+        <b>🎓 University VMS — Admin</b>
+        {user && <>
+          <div className="nav-user">
+            <span style={{ fontSize: 13, color: '#cfd8ff' }}>{user.full_name}</span>
+            <Avatar name={user.full_name} url={user.profile_picture_url} size={34} />
+            <button className="secondary" onClick={logout} style={{ padding: '6px 12px', fontSize: 12 }}>Logout</button>
+          </div>
+        </>}
+      </nav>
+      <div className="container">
+        <Routes>
+          <Route path="/login" element={<Login onLogin={setUser} />} />
+          <Route path="/" element={token ? <AdminEvents /> : <Navigate to="/login" />} />
+          <Route path="/manage/:id" element={<ManageEvent />} />
+          <Route path="/profile/:userId" element={<ViewProfile />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </div>
+    </>
+  );
+}
