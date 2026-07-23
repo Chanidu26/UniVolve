@@ -1,17 +1,16 @@
 // Azure AD B2C configuration
 const tenant = import.meta.env.VITE_B2C_TENANT;         // e.g. vmsuniversity
-const policy = import.meta.env.VITE_B2C_POLICY;         // e.g. B2C_1_signupsignin
 
+// NEW (Entra External ID)
 export const msalConfig = {
   auth: {
-    clientId: import.meta.env.VITE_B2C_CLIENT_ID,
-    authority: `https://${tenant}.b2clogin.com/${tenant}.onmicrosoft.com/${policy}`,
-    knownAuthorities: [`${tenant}.b2clogin.com`],
+    clientId: import.meta.env.VITE_CLIENT_ID,
+    authority: `https://${tenant}.ciamlogin.com/`,
+    knownAuthorities: [`${tenant}.ciamlogin.com`],
     redirectUri: window.location.origin,
   },
-  cache: { cacheLocation: 'sessionStorage' },
 };
 
 export const loginRequest = {
-  scopes: [import.meta.env.VITE_API_SCOPE], // e.g. https://<tenant>.onmicrosoft.com/vms-api/access
+  scopes: [import.meta.env.VITE_API_SCOPE],
 };
