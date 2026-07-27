@@ -5,7 +5,7 @@ const pool = require('../db/pool');
 // Entra External ID token validation
 const tenant = process.env.TENANT_NAME;   // e.g. vmsuniversity
 const tenantId = process.env.TENANT_ID;  // e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-const clientId = process.env.CLIENT_ID;  // SPA app registration client ID
+const apiClientId = process.env.API_CLIENT_ID;  // backend's own API app registration ID (not either SPA's)
 
 const client = jwksClient({
   jwksUri: `https://${tenant}.ciamlogin.com/${tenant}.onmicrosoft.com/discovery/v2.0/keys`,
@@ -21,7 +21,9 @@ exports.authenticate = (req, res, next) => {
   if (!token) return res.status(401).json({ error: 'Missing token' });
 
   jwt.verify(token, getKey, {
-    audience: clientId,
+    // Both SPAs (admin-frontend, volunteer-frontend) request this API's scope, so
+    // tokens from either carry this same audience regardless of which SPA acquired them.
+    audience: `api://${apiClientId}`,
     issuer: `https://${tenant}.ciamlogin.com/${tenantId}/v2.0/`,
   }, async (err, decoded) => {
     if (err) return res.status(401).json({ error: 'Invalid or expired token' });

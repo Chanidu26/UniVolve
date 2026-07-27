@@ -26,10 +26,17 @@ Users ──HTTPS──►                                            ├──�
 ```
 
 ## Deploy steps
-1. **Create the Entra External ID tenant manually** (Terraform can't create it):
-   - Register two SPA app registrations — one for `admin-frontend`, one for `volunteer-frontend`
-     (redirect URI = each app's Static Web App URL) — and expose an API scope `access`.
-   - Note tenant name, tenant GUID, and both client ids.
+1. **Create the Entra External ID tenant manually** (Terraform can't create it), with **three**
+   app registrations:
+   - One **API** app registration representing the backend — expose an API scope named `access`
+     (this sets its Application ID URI, typically defaulted to `api://<api-app-client-id>`).
+   - Two **SPA** app registrations, one for `admin-frontend` and one for `volunteer-frontend`
+     (redirect URI = each app's Static Web App URL) — grant each a delegated API permission to the
+     API app's `access` scope.
+   - Note the tenant name, tenant GUID, the **API app's** client ID (this is `api_client_id` in
+     Terraform — APIM and the backend validate every token's audience against it, regardless of
+     which SPA acquired the token), and **both SPA client IDs** (these only ever go into each
+     frontend's own build — `VITE_CLIENT_ID` — Terraform/the backend never see them).
 2. **Provision infrastructure**:
    ```bash
    cd terraform
@@ -49,8 +56,9 @@ Users ──HTTPS──►                                            ├──�
 5. **Deploy both frontends**: push to GitHub with the workflows in `.github/workflows/`
    (`deploy-admin-frontend.yml`, `deploy-volunteer-frontend.yml`), setting secrets:
    `SWA_ADMIN_DEPLOY_TOKEN` / `SWA_VOLUNTEER_DEPLOY_TOKEN` (terraform outputs), `AZURE_CREDENTIALS`,
-   `ACR_NAME`, `VITE_API_URL` (APIM gateway url + /api), `VITE_B2C_TENANT`, `VITE_API_SCOPE`, and
-   the two app-specific `VITE_ADMIN_CLIENT_ID` / `VITE_VOLUNTEER_CLIENT_ID` values.
+   `ACR_NAME`, `VITE_API_URL` (APIM gateway url + /api), `VITE_B2C_TENANT`,
+   `VITE_API_SCOPE` = `api://<api-app-client-id>/access` (same value in both workflows), and the
+   two SPA-specific `VITE_ADMIN_CLIENT_ID` / `VITE_VOLUNTEER_CLIENT_ID` values.
 6. **Promote first admin** after logging in once:
    ```sql
    UPDATE users SET system_role='SUPER_ADMIN' WHERE email='admin@university.lk';
