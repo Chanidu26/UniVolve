@@ -1,7 +1,10 @@
-# University Volunteering & Event Management System (VMS)
+# UniVolve - University Volunteering & Event Management System 
 
-Full-stack implementation of the CA01 architecture report (EC8208).
-3-Tier: React → Node.js/Express REST API → PostgreSQL.
+## System Design On Azure Architecture 
+
+![Azure Infrastructure Architecture](azure-infra-guide/Architecture.png)
+
+## Folder Structure 
 
 - `local/`  — Dockerized local dev: React + Express + Postgres + MailHog. `docker compose up --build`.
 - `azure/`  — Production variant: Azure AD B2C (MSAL), API Management, Container Apps,
