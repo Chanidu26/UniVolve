@@ -14,11 +14,11 @@ jobs:
       - name: Build & push image
         run: |
           az acr login --name ${{ secrets.ACR_NAME }}
-          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/vms-backend:${{ github.sha }} ./azure/backend
-          docker push ${{ secrets.ACR_NAME }}.azurecr.io/vms-backend:${{ github.sha }}
+          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/univolve-backend:${{ github.sha }} ./azure/backend
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/univolve-backend:${{ github.sha }}
       - name: Update Container App
         run: |
           az containerapp update \
-            --name ca-backend-vms-prod \
-            --resource-group rg-vms-prod \
-            --image ${{ secrets.ACR_NAME }}.azurecr.io/vms-backend:${{ github.sha }}
+            --name ca-backend-univolve-prod \
+            --resource-group rg-univolve-prod \
+            --image ${{ secrets.ACR_NAME }}.azurecr.io/univolve-backend:${{ github.sha }}
