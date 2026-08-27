@@ -31,12 +31,16 @@ exports.authenticate = (req, res, next) => {
       // JIT-provision user on first login
       const email = decoded.emails?.[0] || decoded.email || decoded.preferred_username;
       const name = decoded.name || decoded.displayName || email;
+      const roles = Array.isArray(decoded.roles) ? decoded.roles : [];
+      const systemRole = roles.includes('SUPER_ADMIN') ? 'SUPER_ADMIN' : 'VOLUNTEER';
       const { rows } = await pool.query(`
-        INSERT INTO users (email, b2c_object_id, full_name)
-        VALUES ($1, $2, $3)
-        ON CONFLICT (b2c_object_id) DO UPDATE SET email = EXCLUDED.email
+        INSERT INTO users (email, b2c_object_id, full_name, system_role)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (b2c_object_id) DO UPDATE
+          SET email = EXCLUDED.email,
+              system_role = EXCLUDED.system_role
         RETURNING id, email, full_name, system_role`,
-        [email, decoded.sub || decoded.oid, name]);
+        [email, decoded.sub || decoded.oid, name, systemRole]);
       const u = rows[0];
       req.user = { sub: u.id, email: u.email, system_role: u.system_role };
       next();

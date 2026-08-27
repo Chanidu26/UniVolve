@@ -294,13 +294,19 @@ You need a **User Flow** plus **three** app registrations, all inside this tenan
 1. **User flow**: External Identities → User flows → new "Sign up and sign in" flow (e.g.
    `SignUpSignIn`), email + password identity provider.
 2. **API app registration** (`univolve-api`): no redirect URI. Expose an API → Application ID URI
-   `api://<its-client-id>` → add scope `access` (Admins and users, enabled). This app's **client ID**
-   is `API_CLIENT_ID` above.
+   `api://<its-client-id>` → add scope `access` (Admins and users, enabled). Also add an app role
+   with value `SUPER_ADMIN`, display name `Super administrator`, and allowed member types
+   **Users/Groups**. This app's **client ID** is `API_CLIENT_ID` above.
 3. **Admin SPA app registration** (`univolve-admin-frontend`): redirect URI = Admin Static Web App's
    URL (platform: Single-page application). API permissions → add `univolve-api`'s `access` scope →
-   grant admin consent. Add this app to the user flow's Applications list.
+   grant admin consent. Add this app to the user flow's Applications list. The SPA requests the
+   API scope; the API access token will contain the assigned app role in its `roles` claim.
 4. **Volunteer SPA app registration** (`univolve-volunteer-frontend`): same as above, redirect URI =
    Volunteer Static Web App's URL. Add to the user flow too.
+
+After the API app role exists, open **Enterprise applications** for `univolve-api` → **Users and
+groups** → **Add user/group**, then assign `SUPER_ADMIN` to the administrator user or group.
+Only users/groups assigned this role are treated as administrators; all others are volunteers.
 
 ## 17. Static Web Apps (two portals)
 
@@ -400,9 +406,8 @@ Copy the entire JSON it prints into the `AZURE_CREDENTIALS` secret.
    with a placeholder image beforehand; this pipeline run is what actually gets a real image running.)
 2. Push to `azure/admin-frontend/**` and `azure/volunteer-frontend/**` once the rest of the secrets
    above are set — deploys both Static Web Apps.
-3. Log in once through the Volunteer Portal with `admin@university.lk` (or whatever External ID
-   account you intend as the admin), then promote it manually:
-   ```sql
-   UPDATE users SET system_role='SUPER_ADMIN' WHERE email='admin@university.lk';
-   ```
-   (run against the Postgres server the same way as step 19).
+3. Assign the `SUPER_ADMIN` app role in Entra External ID to the administrator user or group as
+   described in step 16. The backend reads the verified access token's `roles` claim on every login:
+   users with `SUPER_ADMIN` are synchronized as `SUPER_ADMIN`, and all other users as `VOLUNTEER`.
+   No manual database promotion is required. Existing users synchronize on their next login, and
+   removing the Entra assignment removes administrator access on the next login.

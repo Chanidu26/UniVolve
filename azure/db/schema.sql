@@ -56,5 +56,4 @@ CREATE TABLE applications (
 CREATE INDEX idx_apps_volunteer ON applications(volunteer_id);
 CREATE INDEX idx_apps_status ON applications(status);
 
--- Promote first admin after their first B2C login:
--- UPDATE users SET system_role='SUPER_ADMIN' WHERE email='admin@university.lk';
+-- system_role is synchronized from the verified Entra app-role claim on login.

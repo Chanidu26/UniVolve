@@ -59,7 +59,15 @@ Users ──HTTPS──►                                            ├──�
    `ACR_NAME`, `VITE_API_URL` (APIM gateway url + /api), `VITE_B2C_TENANT`,
    `VITE_API_SCOPE` = `api://<api-app-client-id>/access` (same value in both workflows), and the
    two SPA-specific `VITE_ADMIN_CLIENT_ID` / `VITE_VOLUNTEER_CLIENT_ID` values.
-6. **Promote first admin** after logging in once:
-   ```sql
-   UPDATE users SET system_role='SUPER_ADMIN' WHERE email='admin@university.lk';
-   ```
+6. **Configure automatic administrator assignment** in Entra External ID:
+   - In the API app registration, create an app role with value `SUPER_ADMIN`
+     (allowed member type: Users/Groups).
+   - Assign that app role to the administrator user or an administrator group.
+   - Ensure both SPA app registrations request the API `access` scope. The resulting
+     access token will contain the verified `roles` claim.
+   - On every login, the backend maps `roles: ['SUPER_ADMIN']` to
+     `users.system_role = 'SUPER_ADMIN'`. Users without that claim are stored as
+     `VOLUNTEER`.
+
+   No manual SQL promotion is required. Existing users are synchronized on their next
+   login, so removing the Entra app-role assignment also removes administrator access.
