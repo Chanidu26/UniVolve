@@ -23,6 +23,7 @@ router.put('/events/:id', authenticate, requireRole('SUPER_ADMIN'), events.updat
 router.delete('/events/:id', authenticate, requireRole('SUPER_ADMIN'), events.remove);
 
 // Event roles
+router.get('/events/:id/roles', authenticate, events.requireEventOrganizer, roles.list);
 router.post('/events/:id/roles', authenticate, events.requireEventOrganizer, roles.create);
 router.put('/events/:id/roles/:roleId', authenticate, events.requireEventOrganizer, roles.update);
 router.delete('/events/:id/roles/:roleId', authenticate, events.requireEventOrganizer, roles.remove);
