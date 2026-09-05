@@ -11,7 +11,11 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      # Postgres runs these in filename order on FIRST init of an empty volume.
+      # Interim wiring until Member 1's `npm run migrate` runner lands (Wave 0);
+      # each new migration gets the next NN_ prefix here.
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./db/migrations/002_attendance.sql:/docker-entrypoint-initdb.d/02_002_attendance.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U vms -d vmsdb"]
       interval: 5s
