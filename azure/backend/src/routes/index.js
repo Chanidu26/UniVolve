@@ -33,4 +33,7 @@ router.get('/applications/mine', authenticate, apps.mine);
 router.get('/events/:id/applications', authenticate, events.requireEventOrganizer, apps.listForEvent);
 router.put('/events/:id/applications/:appId', authenticate, events.requireEventOrganizer, apps.decide);
 
+// Attendance & verified hours
+router.use('/', require('./attendance'));
+
 module.exports = router;
