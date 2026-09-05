@@ -21,6 +21,7 @@ router.get('/events', authenticate, events.list);
 router.post('/events', authenticate, requireRole('SUPER_ADMIN'), events.create);
 router.put('/events/:id', authenticate, requireRole('SUPER_ADMIN'), events.update);
 router.delete('/events/:id', authenticate, requireRole('SUPER_ADMIN'), events.remove);
+router.post('/events/:id/banner', authenticate, events.requireEventOrganizer, events.uploadBanner);
 
 // Event roles
 router.get('/events/:id/roles', authenticate, events.requireEventOrganizer, roles.list);

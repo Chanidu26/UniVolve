@@ -103,3 +103,41 @@ td { padding: 10px 8px; border-bottom: 1px solid #f0f2f5; vertical-align: middle
 .msg { padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; }
 .msg.ok  { background: #d1e7dd; color: #0a5c36; }
 .msg.err { background: #f8d7da; color: #842029; }
+
+/* ── EVENT DISCOVERY FILTERS ── */
+.filter-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+.filter-bar input[type="text"],
+.filter-bar input[type="date"],
+.filter-bar select { width: auto; flex: none; margin: 0; padding: 8px 12px; font-size: 13px; }
+.filter-bar input[type="text"] { min-width: 220px; flex: 1; }
+.filter-bar select { min-width: 140px; }
+.filter-bar input[type="date"] { min-width: 140px; }
+
+/* ── CATEGORY CHIPS ── */
+.chip-group { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.chip { display: inline-block; padding: 5px 14px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; border: 2px solid #d0d5e0; background: #fff; color: #555; transition: all .15s; }
+.chip:hover { border-color: #5c6bc0; color: #1a1a5e; }
+.chip.active { background: #1a1a5e; color: #fff; border-color: #1a1a5e; }
+
+/* ── CATEGORY BADGES (on cards) ── */
+.badge.category { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-left: 8px; }
+.badge.cat-community-service { background: #fce4ec; color: #ad1457; }
+.badge.cat-environmental   { background: #e8f5e9; color: #2e7d32; }
+.badge.cat-health          { background: #e3f2fd; color: #1565c0; }
+.badge.cat-education       { background: #fff8e1; color: #f57f17; }
+.badge.cat-other           { background: #f3e5f5; color: #7b1fa2; }
+
+/* ── BANNER IMAGE ── */
+.card-banner { width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px 8px 0 0; margin: -20px -20px 14px -20px; width: calc(100% + 40px); }
+
+/* ── SLOTS PROGRESS BAR ── */
+.slots-bar { margin-top: 10px; }
+.slots-bar-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+.slots-bar-track { height: 8px; background: #e8eaf0; border-radius: 4px; overflow: hidden; }
+.slots-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #4caf50, #81c784); transition: width .3s; }
+.slots-bar-fill.full { background: linear-gradient(90deg, #e53935, #ef5350); }
+
+/* ── BANNER UPLOAD ── */
+.banner-upload { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; }
+.banner-preview { max-height: 80px; border-radius: 6px; }
+
