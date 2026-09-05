@@ -11,8 +11,11 @@ const SKILL_OPTIONS = [
 
 const PLATFORMS = ['LinkedIn', 'GitHub', 'Portfolio', 'Behance', 'Dribbble', 'YouTube', 'Instagram', 'Twitter/X', 'Other'];
 
+const fmtHours = (h) => Number(h || 0).toFixed(2);
+
 export default function Profile({ onUpdate }) {
   const [p, setP] = useState(null);
+  const [hours, setHours] = useState(null);   // FR-07 verified hours dashboard
   const [skills, setSkills] = useState([]);
   const [links, setLinks] = useState([]);           // [{platform, url}]
   const [bio, setBio] = useState('');
@@ -35,6 +38,7 @@ export default function Profile({ onUpdate }) {
         return rest.length ? { platform, url: rest.join('::') } : { platform: 'Other', url: raw };
       }));
     });
+    api.get('/users/me/hours').then(r => setHours(r.data)).catch(() => setHours(null));
   }, []);
 
   // --- Photo upload ---
@@ -96,6 +100,61 @@ export default function Profile({ onUpdate }) {
           </div>
         </div>
       </div>
+
+      {/* ── Volunteering hours (FR-07) ── */}
+      {hours && (
+        <div className="card">
+          <h3 style={{ marginBottom: 14 }}>My Volunteering Hours</h3>
+          <div className="profile-stats">
+            <div className="stat">
+              <div className="num">{fmtHours(hours.total_hours)}</div>
+              <div className="lbl">Verified Hours</div>
+            </div>
+            <div className="stat">
+              <div className="num">{hours.events_attended}</div>
+              <div className="lbl">Events Attended</div>
+            </div>
+            <div className="stat">
+              <div className="num">{hours.pending_verification}</div>
+              <div className="lbl">Awaiting Verification</div>
+            </div>
+          </div>
+
+          {hours.history.length === 0 ? (
+            <p className="muted" style={{ marginTop: 14 }}>
+              No attendance recorded yet. Once an organizer marks you present and verifies your
+              hours, they will show up here.
+            </p>
+          ) : (
+            <div className="table-scroll" style={{ marginTop: 16 }}>
+              <table>
+                <thead>
+                  <tr><th>Event</th><th>Role</th><th>Date</th><th>Hours</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                  {hours.history.map(h => (
+                    <tr key={h.id}>
+                      <td>{h.event_title}</td>
+                      <td>{h.role_name}</td>
+                      <td style={{ fontSize: 12, color: '#666' }}>
+                        {new Date(h.event_date).toLocaleDateString()}
+                      </td>
+                      <td className="hours-num">{fmtHours(h.hours_logged)}</td>
+                      <td>
+                        {h.status === 'PRESENT' && h.verified_at
+                          ? <span className="badge VERIFIED">VERIFIED</span>
+                          : <span className={`badge ${h.status}`}>{h.status}</span>}
+                        {h.status === 'PRESENT' && !h.verified_at &&
+                          <div><small className="muted">awaiting verification</small></div>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       <form onSubmit={save}>
         {/* ── Basic info ── */}

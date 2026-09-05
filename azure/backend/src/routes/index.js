@@ -23,6 +23,7 @@ router.put('/events/:id', authenticate, requireRole('SUPER_ADMIN'), events.updat
 router.delete('/events/:id', authenticate, requireRole('SUPER_ADMIN'), events.remove);
 
 // Event roles
+router.get('/events/:id/roles', authenticate, events.requireEventOrganizer, roles.list);
 router.post('/events/:id/roles', authenticate, events.requireEventOrganizer, roles.create);
 router.put('/events/:id/roles/:roleId', authenticate, events.requireEventOrganizer, roles.update);
 router.delete('/events/:id/roles/:roleId', authenticate, events.requireEventOrganizer, roles.remove);
@@ -32,5 +33,8 @@ router.post('/applications', authenticate, apps.apply);
 router.get('/applications/mine', authenticate, apps.mine);
 router.get('/events/:id/applications', authenticate, events.requireEventOrganizer, apps.listForEvent);
 router.put('/events/:id/applications/:appId', authenticate, events.requireEventOrganizer, apps.decide);
+
+// Attendance & verified hours
+router.use('/', require('./attendance'));
 
 module.exports = router;

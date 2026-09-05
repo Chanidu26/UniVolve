@@ -79,3 +79,27 @@ td { padding: 10px 8px; border-bottom: 1px solid #f0f2f5; vertical-align: middle
 
 /* ── SEARCH ── */
 .search-box { padding: 9px 12px; border: 1px solid #d0d5e0; border-radius: 6px; width: 100%; margin-bottom: 12px; font-size: 14px; }
+
+/* ── TABS ── */
+.tabs { display: flex; gap: 4px; border-bottom: 2px solid #e8eaf0; margin-bottom: 16px; }
+.tab { background: transparent; color: #666; border: 0; border-bottom: 3px solid transparent; border-radius: 0; padding: 10px 18px; font-size: 14px; font-weight: 500; }
+.tab:hover { background: #f5f6ff; opacity: 1; }
+.tab.active { color: #1a1a5e; border-bottom-color: #1a1a5e; font-weight: 700; }
+
+/* ── ATTENDANCE & HOURS ── */
+.badge.PRESENT  { background: #d1e7dd; color: #0a5c36; }
+.badge.ABSENT   { background: #f8d7da; color: #842029; }
+.badge.EXCUSED  { background: #fff3cd; color: #856404; }
+.badge.VERIFIED { background: #cfe2ff; color: #084298; }
+.badge.UNMARKED { background: #e2e3e5; color: #41464b; }
+.cell-input { margin: 0; padding: 6px 8px; font-size: 13px; }
+.cell-stack { display: flex; flex-direction: column; gap: 6px; min-width: 190px; }
+.row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.hours-num { font-weight: 700; color: #1a1a5e; }
+.muted { color: #999; font-size: 13px; }
+.table-scroll { overflow-x: auto; }
+
+/* ── INLINE MESSAGES ── */
+.msg { padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; }
+.msg.ok  { background: #d1e7dd; color: #0a5c36; }
+.msg.err { background: #f8d7da; color: #842029; }
