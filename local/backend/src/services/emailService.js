@@ -18,3 +18,45 @@ exports.sendStatusEmail = async (to, eventTitle, roleName, status) => {
     console.error('Email send failed (non-fatal):', e.message);
   }
 };
+
+exports.sendOrganizerAssignedEmail = async (to, eventTitle, eventDate) => {
+  try {
+    await transport.sendMail({
+      from: 'noreply@vms.local',
+      to,
+      subject: `You've been assigned as organizer: ${eventTitle}`,
+      html: `<p>You have been assigned as the <b>organizer</b> for <b>${eventTitle}</b>` +
+        (eventDate ? ` on <b>${new Date(eventDate).toLocaleDateString()}</b>` : '') + `.</p>`,
+    });
+  } catch (e) {
+    console.error('Email send failed (non-fatal):', e.message);
+  }
+};
+
+exports.sendNewOpportunityEmail = async (to, eventTitle, roleName, eventDate) => {
+  try {
+    await transport.sendMail({
+      from: 'noreply@vms.local',
+      to,
+      subject: `New volunteer opportunity: ${roleName} at ${eventTitle}`,
+      html: `<p>A new volunteer role, <b>${roleName}</b>, has just opened up at <b>${eventTitle}</b>` +
+        (eventDate ? ` on <b>${new Date(eventDate).toLocaleDateString()}</b>` : '') +
+        `.</p><p>Visit UniVolve to view the details and apply.</p>`,
+    });
+  } catch (e) {
+    console.error('Email send failed (non-fatal):', e.message);
+  }
+};
+
+exports.sendWelcomeEmail = async (to, fullName) => {
+  try {
+    await transport.sendMail({
+      from: 'noreply@vms.local',
+      to,
+      subject: 'Welcome to UniVolve',
+      html: `<p>Hi <b>${fullName}</b>, your UniVolve account has been created. You can now browse events and apply for volunteer roles.</p>`,
+    });
+  } catch (e) {
+    console.error('Email send failed (non-fatal):', e.message);
+  }
+};

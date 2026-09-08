@@ -4,6 +4,7 @@ const fs = require('fs');
 const multer = require('multer');
 const pool = require('../db/pool');
 const { sign } = require('../middleware/auth');
+const { sendWelcomeEmail } = require('../services/emailService');
 
 const PROFILE_COLS = 'id, email, full_name, system_role, bio, skills, portfolio_links, profile_picture_url, created_at';
 
@@ -54,6 +55,7 @@ exports.register = async (req, res) => {
       `INSERT INTO users (email, password_hash, full_name, bio, skills, portfolio_links, profile_picture_url)
        VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING ${PROFILE_COLS}`,
       [email, hash, full_name, bio || null, toArray(skills), toArray(portfolio_links), profile_picture_url || null]);
+    sendWelcomeEmail(rows[0].email, rows[0].full_name);
     res.status(201).json({ user: rows[0], token: sign(rows[0]) });
   } catch (e) {
     if (e.code === '23505') return res.status(409).json({ error: 'Email already registered' });

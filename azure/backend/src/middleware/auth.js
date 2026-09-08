@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
 const pool = require('../db/pool');
+const { sendWelcomeEmail } = require('../services/emailService');
 
 // Entra External ID token validation
 const tenant = process.env.TENANT_NAME;   // e.g. vmsuniversity
@@ -39,10 +40,11 @@ exports.authenticate = (req, res, next) => {
         ON CONFLICT (b2c_object_id) DO UPDATE
           SET email = EXCLUDED.email,
               system_role = EXCLUDED.system_role
-        RETURNING id, email, full_name, system_role`,
+        RETURNING id, email, full_name, system_role, (xmax = 0) AS is_new`,
         [email, decoded.sub || decoded.oid, name, systemRole]);
       const u = rows[0];
       req.user = { sub: u.id, email: u.email, system_role: u.system_role };
+      if (u.is_new) sendWelcomeEmail(u.email, u.full_name);
       next();
     } catch (e) { next(e); }
   });

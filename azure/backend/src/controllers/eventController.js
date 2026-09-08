@@ -1,4 +1,5 @@
 const pool = require('../db/pool');
+const { sendOrganizerAssignedEmail } = require('../services/emailService');
 
 exports.list = async (req, res) => {
   const admin = req.user.system_role === 'SUPER_ADMIN';
@@ -28,14 +29,20 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   const { title, description, event_date, location, status, organizer_id } = req.body;
+  const { rows: before } = await pool.query('SELECT organizer_id FROM events WHERE id=$1', [req.params.id]);
+  if (!before[0]) return res.status(404).json({ error: 'Event not found' });
   const { rows } = await pool.query(
     `UPDATE events SET title=COALESCE($1,title), description=COALESCE($2,description),
      event_date=COALESCE($3,event_date), location=COALESCE($4,location),
      status=COALESCE($5,status), organizer_id=COALESCE($6,organizer_id)
      WHERE id=$7 RETURNING *`,
     [title, description, event_date, location, status, organizer_id, req.params.id]);
-  if (!rows[0]) return res.status(404).json({ error: 'Event not found' });
-  res.json(rows[0]);
+  const event = rows[0];
+  if (organizer_id && organizer_id !== before[0].organizer_id) {
+    const { rows: organizer } = await pool.query('SELECT email FROM users WHERE id=$1', [organizer_id]);
+    if (organizer[0]) sendOrganizerAssignedEmail(organizer[0].email, event.title, event.event_date);
+  }
+  res.json(event);
 };
 
 exports.remove = async (req, res) => {
