@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Avatar from './Avatar.jsx';
 import api from '../api/client.js';
 
-export default function VolunteerPickerModal({ onPick, onClose }) {
+export default function VolunteerPickerModal({ onPick, onClose, title = 'Assign Organizer', actionLabel = 'Assign' }) {
   const [volunteers, setVolunteers] = useState([]);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState(null);
@@ -18,7 +18,7 @@ export default function VolunteerPickerModal({ onPick, onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Assign Organizer</h3>
+          <h3>{title}</h3>
           <button className="ghost" onClick={onClose}>✕</button>
         </div>
         <div className="modal-body">
@@ -43,7 +43,7 @@ export default function VolunteerPickerModal({ onPick, onClose }) {
         <div className="modal-footer">
           <button className="ghost" onClick={onClose}>Cancel</button>
           <button disabled={!selected} onClick={() => selected && onPick(selected)}>
-            Assign {selected ? selected.full_name : ''}
+            {actionLabel}{selected ? ` ${selected.full_name}` : ''}
           </button>
         </div>
       </div>

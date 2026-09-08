@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useMsal, useIsAuthenticated } from '@azure/msal-react';
 import Events from './pages/Events.jsx';
 import MyApplications from './pages/MyApplications.jsx';
+import VolunteerRequests from './pages/VolunteerRequests.jsx';
 import Profile from './pages/Profile.jsx';
 import ViewProfile from './pages/ViewProfile.jsx';
 import ManageEvent from './pages/ManageEvent.jsx';
@@ -24,9 +25,12 @@ export default function App() {
   if (!isAuthed) return (
     <div className="container">
       <div className="card" style={{ maxWidth: 420, margin: '80px auto', textAlign: 'center' }}>
-        <h2>🎓 University VMS</h2>
-        <p>Sign in with your university account.</p>
-        <button onClick={login}>Sign in / Register</button>
+        <h2>🎓 Welcome to UniVolve</h2>
+        <p>Volunteer Portal — discover campus events, apply for volunteer roles, and build your portfolio.</p>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 16 }}>
+          <button onClick={login}>Login</button>
+          <button className="secondary" onClick={login}>Sign Up</button>
+        </div>
       </div>
     </div>
   );
@@ -34,8 +38,9 @@ export default function App() {
   return (
     <>
       <nav>
-        <b>🎓 University VMS</b>
+        <b>🎓 UniVolve</b>
         <Link to="/">Events</Link>
+        <Link to="/requests">Volunteer Requests</Link>
         <Link to="/my-applications">My Applications</Link>
         <Link to="/profile">My Profile</Link>
         <span style={{ marginLeft: 'auto' }}>{user?.full_name} ({user?.system_role})</span>
@@ -44,6 +49,7 @@ export default function App() {
       <div className="container">
         <Routes>
           <Route path="/" element={<Events user={user} />} />
+          <Route path="/requests" element={<VolunteerRequests />} />
           <Route path="/my-applications" element={<MyApplications />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:userId" element={<ViewProfile />} />

@@ -22,9 +22,12 @@ export default function App() {
   if (!isAuthed) return (
     <div className="container">
       <div className="card" style={{ maxWidth: 420, margin: '80px auto', textAlign: 'center' }}>
-        <h2>🎓 University VMS — Admin</h2>
-        <p>Sign in with your administrator account.</p>
-        <button onClick={login}>Sign in</button>
+        <h2>🎓 Welcome to UniVolve</h2>
+        <p>Admin Portal — manage events, volunteer roles, and applications.</p>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 16 }}>
+          <button onClick={login}>Login</button>
+          <button className="secondary" onClick={login}>Sign Up</button>
+        </div>
       </div>
     </div>
   );
@@ -32,7 +35,7 @@ export default function App() {
   return (
     <>
       <nav>
-        <b>🎓 University VMS — Admin</b>
+        <b>🎓 UniVolve — Admin</b>
         <span style={{ marginLeft: 'auto' }}>{user?.full_name} ({user?.system_role})</span>
         <button className="secondary" onClick={logout}>Logout</button>
       </nav>

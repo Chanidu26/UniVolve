@@ -48,7 +48,9 @@ CREATE TABLE applications (
     event_role_id UUID NOT NULL REFERENCES event_roles(id) ON DELETE CASCADE,
     volunteer_id UUID NOT NULL REFERENCES users(id),
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING'
-        CHECK (status IN ('PENDING','APPROVED','REJECTED')),
+        CHECK (status IN ('PENDING','APPROVED','REJECTED','INVITED')),
+    origin VARCHAR(10) NOT NULL DEFAULT 'SELF'
+        CHECK (origin IN ('SELF','INVITE')),  -- SELF = volunteer applied; INVITE = organizer invited
     applied_at TIMESTAMPTZ DEFAULT NOW(),
     decided_at TIMESTAMPTZ,
     UNIQUE(event_role_id, volunteer_id)       -- isDuplicate()

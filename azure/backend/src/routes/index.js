@@ -13,7 +13,7 @@ router.put('/auth/me', authenticate, auth.updateProfile);
 router.post('/auth/upload-photo', authenticate, auth.uploadPhoto);
 
 // Users
-router.get('/users', authenticate, requireRole('SUPER_ADMIN'), auth.listVolunteers);
+router.get('/users', authenticate, auth.listVolunteers);
 router.get('/users/:userId', authenticate, auth.viewProfile);
 
 // Events
@@ -30,7 +30,9 @@ router.delete('/events/:id/roles/:roleId', authenticate, events.requireEventOrga
 // Applications
 router.post('/applications', authenticate, apps.apply);
 router.get('/applications/mine', authenticate, apps.mine);
+router.put('/applications/:appId/respond', authenticate, apps.respond);
 router.get('/events/:id/applications', authenticate, events.requireEventOrganizer, apps.listForEvent);
 router.put('/events/:id/applications/:appId', authenticate, events.requireEventOrganizer, apps.decide);
+router.post('/events/:id/roles/:roleId/invite', authenticate, events.requireEventOrganizer, apps.invite);
 
 module.exports = router;

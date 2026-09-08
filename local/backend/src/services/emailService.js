@@ -48,6 +48,20 @@ exports.sendNewOpportunityEmail = async (to, eventTitle, roleName, eventDate) =>
   }
 };
 
+exports.sendInvitationEmail = async (to, eventTitle, roleName) => {
+  try {
+    await transport.sendMail({
+      from: 'noreply@vms.local',
+      to,
+      subject: `You've been invited: ${roleName} at ${eventTitle}`,
+      html: `<p>The organizer of <b>${eventTitle}</b> has invited you to volunteer as <b>${roleName}</b>.</p>` +
+        `<p>Visit UniVolve → Volunteer Requests to accept or decline.</p>`,
+    });
+  } catch (e) {
+    console.error('Email send failed (non-fatal):', e.message);
+  }
+};
+
 exports.sendWelcomeEmail = async (to, fullName) => {
   try {
     await transport.sendMail({

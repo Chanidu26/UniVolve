@@ -76,6 +76,7 @@ exports.login = async (req, res) => {
 
 exports.me = async (req, res) => {
   const { rows } = await pool.query(`SELECT ${PROFILE_COLS} FROM users WHERE id=$1`, [req.user.sub]);
+  if (!rows[0]) return res.status(404).json({ error: 'User not found' });
   res.json(rows[0]);
 };
 

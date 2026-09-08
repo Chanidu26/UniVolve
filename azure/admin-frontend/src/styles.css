@@ -30,6 +30,7 @@ label { font-size: 13px; color: #555; font-weight: 500; }
 /* ── BADGES ── */
 .badge { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
 .badge.PENDING  { background: #fff3cd; color: #856404; }
+.badge.INVITED  { background: #ede4ff; color: #5b21b6; }
 .badge.APPROVED { background: #d1e7dd; color: #0a5c36; }
 .badge.REJECTED { background: #f8d7da; color: #842029; }
 .badge.DRAFT     { background: #e2e3e5; color: #41464b; }

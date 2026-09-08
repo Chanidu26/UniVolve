@@ -2,19 +2,26 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/client.js';
 import UserChip from '../components/UserChip.jsx';
+import VolunteerPickerModal from '../components/VolunteerPickerModal.jsx';
 
 export default function ManageEvent() {
   const { id } = useParams();
   const [apps, setApps] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [role, setRole] = useState({ role_name: '', description: '', total_slots: 5 });
-  const load = () => api.get(`/events/${id}/applications`).then(r => setApps(r.data));
+  const [inviteRoleId, setInviteRoleId] = useState(null);
+
+  const load = () => {
+    api.get(`/events/${id}/applications`).then(r => setApps(r.data));
+    api.get('/events').then(r => setRoles(r.data.find(e => e.id === id)?.roles || []));
+  };
   useEffect(() => { load(); }, [id]);
 
   const addRole = async e => {
     e.preventDefault();
     await api.post(`/events/${id}/roles`, role);
     setRole({ role_name: '', description: '', total_slots: 5 });
-    alert('Role added');
+    load();
   };
 
   const decide = async (appId, status) => {
@@ -22,9 +29,43 @@ export default function ManageEvent() {
     load();
   };
 
+  const invite = async (volunteer) => {
+    try {
+      await api.post(`/events/${id}/roles/${inviteRoleId}/invite`, { volunteer_id: volunteer.id });
+      setInviteRoleId(null);
+      load();
+    } catch (e) { alert(e.response?.data?.error || 'Invite failed'); }
+  };
+
   return (
     <>
+      {inviteRoleId && (
+        <VolunteerPickerModal
+          title="Invite Volunteer"
+          actionLabel="Invite"
+          onPick={invite}
+          onClose={() => setInviteRoleId(null)}
+        />
+      )}
+
       <h2 style={{ marginBottom: 16 }}>Manage Event</h2>
+
+      {roles.length > 0 && (
+        <div className="card">
+          <h3 style={{ marginBottom: 12 }}>Volunteer Roles</h3>
+          {roles.map(r => (
+            <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '10px 0', borderBottom: '1px solid #eee' }}>
+              <div>
+                <b>{r.role_name}</b>
+                <span style={{ marginLeft: 8, fontSize: 12.5, color: '#666' }}>{r.filled_slots}/{r.total_slots} filled</span>
+              </div>
+              <button className="secondary" onClick={() => setInviteRoleId(r.id)}
+                disabled={r.filled_slots >= r.total_slots}>Invite Volunteer</button>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="card">
         <h3 style={{ marginBottom: 12 }}>Add Volunteer Role</h3>
