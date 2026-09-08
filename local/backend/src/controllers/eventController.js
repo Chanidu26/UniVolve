@@ -1,5 +1,36 @@
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 const pool = require('../db/pool');
 const { sendOrganizerAssignedEmail } = require('../services/emailService');
+
+const uploadDir = process.env.UPLOAD_DIR || '/app/uploads';
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, `event_${req.params.id}_${Date.now()}${path.extname(file.originalname).toLowerCase()}`),
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 4 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+    cb(null, allowed.includes(path.extname(file.originalname).toLowerCase()));
+  },
+}).single('photo');
+
+exports.uploadPhoto = (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const url = `/uploads/${req.file.filename}`;
+    const { rows } = await pool.query(
+      `UPDATE events SET image_url=$1 WHERE id=$2 RETURNING *`, [url, req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Event not found' });
+    res.json(rows[0]);
+  });
+};
 
 exports.list = async (req, res) => {
   const admin = req.user.system_role === 'SUPER_ADMIN';

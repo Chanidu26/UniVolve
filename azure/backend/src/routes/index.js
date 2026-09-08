@@ -21,6 +21,7 @@ router.get('/events', authenticate, events.list);
 router.post('/events', authenticate, requireRole('SUPER_ADMIN'), events.create);
 router.put('/events/:id', authenticate, requireRole('SUPER_ADMIN'), events.update);
 router.delete('/events/:id', authenticate, requireRole('SUPER_ADMIN'), events.remove);
+router.post('/events/:id/photo', authenticate, requireRole('SUPER_ADMIN'), events.uploadPhoto);
 
 // Event roles
 router.post('/events/:id/roles', authenticate, events.requireEventOrganizer, roles.create);

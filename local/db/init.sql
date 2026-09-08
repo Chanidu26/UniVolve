@@ -24,6 +24,7 @@ CREATE TABLE events (
     location VARCHAR(255),
     status VARCHAR(20) NOT NULL DEFAULT 'DRAFT'
         CHECK (status IN ('DRAFT','PUBLISHED','CLOSED')),
+    image_url VARCHAR(500),
     created_by UUID NOT NULL REFERENCES users(id),
     organizer_id UUID REFERENCES users(id),
     created_at TIMESTAMPTZ DEFAULT NOW()

@@ -37,6 +37,20 @@ export const uploadPhoto = async (file) => {
   return res.json();
 };
 
+// Helper for event photo upload (multipart)
+export const uploadEventPhoto = async (eventId, file) => {
+  const form = new FormData();
+  form.append('photo', file);
+  const token = await getToken();
+  const res = await fetch(`${BASE}/events/${eventId}/photo`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  if (!res.ok) throw new Error('Upload failed');
+  return res.json();
+};
+
 // Resolve uploaded photo URLs (backend is on :4000, not :3000/:3001)
 export const photoUrl = (url) => {
   if (!url) return null;

@@ -1,5 +1,29 @@
+const multer = require('multer');
+const { BlobServiceClient } = require('@azure/storage-blob');
 const pool = require('../db/pool');
 const { sendOrganizerAssignedEmail } = require('../services/emailService');
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 4 * 1024 * 1024 } }).single('photo');
+
+exports.uploadPhoto = (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    try {
+      const blobService = BlobServiceClient.fromConnectionString(process.env.STORAGE_CONNECTION_STRING);
+      const container = blobService.getContainerClient(process.env.STORAGE_CONTAINER || 'avatars');
+      await container.createIfNotExists({ access: 'blob' });
+      const ext = req.file.originalname.split('.').pop().toLowerCase();
+      const blobName = `event_${req.params.id}_${Date.now()}.${ext}`;
+      const blockBlob = container.getBlockBlobClient(blobName);
+      await blockBlob.uploadData(req.file.buffer, { blobHTTPHeaders: { blobContentType: req.file.mimetype } });
+      const { rows } = await pool.query(
+        `UPDATE events SET image_url=$1 WHERE id=$2 RETURNING *`, [blockBlob.url, req.params.id]);
+      if (!rows[0]) return res.status(404).json({ error: 'Event not found' });
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: 'Upload failed: ' + e.message }); }
+  });
+};
 
 exports.list = async (req, res) => {
   const admin = req.user.system_role === 'SUPER_ADMIN';
