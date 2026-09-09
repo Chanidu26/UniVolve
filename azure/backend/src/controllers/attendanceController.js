@@ -1,4 +1,5 @@
 const pool = require('../db/pool');
+const { asyncWrap } = require('../middleware/errorHandler');
 
 const STATUSES = ['PRESENT', 'ABSENT', 'EXCUSED'];
 
@@ -53,7 +54,7 @@ async function resolveTarget(req, res) {
 // Hours rules: a complete check-in/out window recomputes hours and clears
 // verification (the numbers changed, so they need confirming again);
 // ABSENT/EXCUSED zeroes hours and clears times; otherwise hours are untouched.
-exports.mark = async (req, res, next) => {
+exports.mark = asyncWrap(async (req, res, next) => {
   try {
     const { status, check_in_time, check_out_time } = req.body;
     if (!STATUSES.includes(status)) {
@@ -102,12 +103,12 @@ exports.mark = async (req, res, next) => {
 
     res.json(rows[0]);
   } catch (e) { next(e); }
-};
+});
 
 // POST /api/events/:id/attendance/hours
 // hours_logged may be given explicitly, otherwise it is derived from the stored
 // check-in/check-out window.
-exports.verifyHours = async (req, res, next) => {
+exports.verifyHours = asyncWrap(async (req, res, next) => {
   try {
     const { hours_logged } = req.body;
     const app = await resolveTarget(req, res);
@@ -157,11 +158,11 @@ exports.verifyHours = async (req, res, next) => {
 
     res.json(rows[0]);
   } catch (e) { next(e); }
-};
+});
 
 // GET /api/events/:id/attendance — every approved volunteer, LEFT JOINed to
 // their attendance row so unmarked volunteers still appear.
-exports.sheet = async (req, res, next) => {
+exports.sheet = asyncWrap(async (req, res, next) => {
   try {
     const { rows } = await pool.query(`
       SELECT a.id                    AS application_id,
@@ -191,10 +192,10 @@ exports.sheet = async (req, res, next) => {
       rows,
     });
   } catch (e) { next(e); }
-};
+});
 
 // GET /api/users/me/hours — the volunteer's own verified-hours dashboard.
-exports.myHours = async (req, res, next) => {
+exports.myHours = asyncWrap(async (req, res, next) => {
   try {
     // COUNT(DISTINCT event_id), not COUNT(*): a volunteer can hold two roles in
     // the same event, which is two attendance rows but one event attended.
@@ -203,13 +204,13 @@ exports.myHours = async (req, res, next) => {
              COUNT(DISTINCT event_id)                                AS events_attended,
              (SELECT COUNT(*) FROM attendance
                WHERE volunteer_id = $1 AND status = 'PRESENT' AND verified_at IS NULL)
-                                                                     AS pending_verification
+                                                                      AS pending_verification
         FROM attendance
        WHERE volunteer_id = $1 AND ${VERIFIED_HOURS}`, [req.user.sub]);
 
     const { rows: history } = await pool.query(`
       SELECT att.id, att.status, att.hours_logged, att.check_in_time, att.check_out_time,
-             att.verified_at,
+              att.verified_at,
              e.id AS event_id, e.title AS event_title, e.event_date, e.location,
              r.role_name
         FROM attendance att
@@ -226,4 +227,4 @@ exports.myHours = async (req, res, next) => {
       history,
     });
   } catch (e) { next(e); }
-};
+});
