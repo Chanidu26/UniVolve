@@ -10,6 +10,7 @@ import ManageEvent from './pages/ManageEvent.jsx';
 import api from './api/client.js';
 import { loginRequest } from './auth/msalConfig.js';
 
+
 export default function App() {
   const { instance } = useMsal();
   const isAuthed = useIsAuthenticated();

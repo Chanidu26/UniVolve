@@ -11,6 +11,7 @@ export const msalConfig = {
     redirectUri: window.location.origin,
   },
   cache: { cacheLocation: 'sessionStorage' },
+  
 };
 
 export const loginRequest = {
