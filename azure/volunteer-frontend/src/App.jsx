@@ -10,18 +10,31 @@ import ManageEvent from './pages/ManageEvent.jsx';
 import api from './api/client.js';
 import { loginRequest } from './auth/msalConfig.js';
 
-
 export default function App() {
   const { instance } = useMsal();
   const isAuthed = useIsAuthenticated();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    if (isAuthed) api.get('/auth/me').then(r => setUser(r.data)).catch(console.error);
+    if (isAuthed) {
+      api.get('/auth/me')
+        .then(r => setUser(r.data))
+        .catch(console.error);
+    }
   }, [isAuthed]);
 
-  const login = () => instance.loginRedirect(loginRequest);
-  const logout = () => instance.logoutRedirect();
+  const login = async () => {
+    try {
+      const response = await instance.loginPopup(loginRequest);
+      if (response && response.account) {
+        instance.setActiveAccount(response.account);
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+    }
+  };
+
+  const logout = () => instance.logoutPopup();
 
   if (!isAuthed) return (
     <div className="container">
