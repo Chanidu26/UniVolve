@@ -3,6 +3,7 @@ on:
   push:
     branches: [main]
     paths: ["azure/backend/**"]
+  workflow_dispatch: {}
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
