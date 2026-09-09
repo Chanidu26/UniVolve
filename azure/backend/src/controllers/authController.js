@@ -1,6 +1,9 @@
 const multer = require('multer');
 const { BlobServiceClient } = require('@azure/storage-blob');
+const { OAuth2Client } = require('google-auth-library');
 const pool = require('../db/pool');
+const { sign } = require('../middleware/auth');
+const { sendWelcomeEmail } = require('../services/emailService');
 
 const PROFILE_COLS = 'id, email, full_name, system_role, bio, skills, portfolio_links, profile_picture_url, created_at';
 const toArray = (val) => {
@@ -8,6 +11,12 @@ const toArray = (val) => {
   if (Array.isArray(val)) return val;
   return val.split(',').map(s => s.trim()).filter(Boolean);
 };
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+// No external IdP role claim anymore, so admin status is a plain email allowlist —
+// set SUPER_ADMIN_EMAILS to a comma-separated list of admin Google accounts.
+const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS || '')
+  .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
 
 // Azure: store in memory then stream to Blob Storage
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } }).single('photo');
@@ -33,8 +42,41 @@ exports.uploadPhoto = (req, res) => {
   });
 };
 
-exports.register = (req, res) => res.status(400).json({ error: 'Registration is handled by Azure AD B2C' });
-exports.login = (req, res) => res.status(400).json({ error: 'Login is handled by Azure AD B2C' });
+// Sign in with Google — verifies the Google ID token, then JIT-provisions/updates the local user row
+// and mints our own session JWT. There's no separate registration step: a new Google account signing
+// in for the first time *is* the registration.
+exports.googleLogin = async (req, res) => {
+  const { credential } = req.body;
+  if (!credential) return res.status(400).json({ error: 'Missing Google credential' });
+
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: process.env.GOOGLE_CLIENT_ID });
+    payload = ticket.getPayload();
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid Google credential' });
+  }
+
+  const email = payload.email;
+  const name = payload.name || email;
+  const googleSub = payload.sub;
+  const systemRole = SUPER_ADMIN_EMAILS.includes(email.toLowerCase()) ? 'SUPER_ADMIN' : 'VOLUNTEER';
+
+  const { rows } = await pool.query(`
+    INSERT INTO users (email, b2c_object_id, full_name, system_role)
+    VALUES ($1, $2, $3, $4)
+    ON CONFLICT (b2c_object_id) DO UPDATE
+      SET email = EXCLUDED.email,
+          system_role = EXCLUDED.system_role
+    RETURNING ${PROFILE_COLS}, (xmax = 0) AS is_new`,
+    [email, googleSub, name, systemRole]);
+
+  const user = rows[0];
+  if (user.is_new) sendWelcomeEmail(user.email, user.full_name);
+  delete user.is_new;
+
+  res.json({ user, token: sign(user) });
+};
 
 exports.me = async (req, res) => {
   const { rows } = await pool.query(`SELECT ${PROFILE_COLS} FROM users WHERE id=$1`, [req.user.sub]);

@@ -1,6 +1,6 @@
-import { Routes, Route, Link, Navigate } from 'react-router-dom';
+import { Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { useMsal, useIsAuthenticated } from '@azure/msal-react';
+import { GoogleLogin } from '@react-oauth/google';
 import Events from './pages/Events.jsx';
 import MyApplications from './pages/MyApplications.jsx';
 import VolunteerRequests from './pages/VolunteerRequests.jsx';
@@ -8,30 +8,34 @@ import Profile from './pages/Profile.jsx';
 import ViewProfile from './pages/ViewProfile.jsx';
 import ManageEvent from './pages/ManageEvent.jsx';
 import api from './api/client.js';
-import { loginRequest } from './auth/msalConfig.js';
-
 
 export default function App() {
-  const { instance } = useMsal();
-  const isAuthed = useIsAuthenticated();
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+  const token = localStorage.getItem('vms_token');
 
   useEffect(() => {
-    if (isAuthed) api.get('/auth/me').then(r => setUser(r.data)).catch(console.error);
-  }, [isAuthed]);
+    if (token) api.get('/auth/me').then(r => setUser(r.data)).catch(logout);
+  }, [token]);
 
-  const login = () => instance.loginRedirect(loginRequest);
-  const logout = () => instance.logoutRedirect();
+  const logout = () => { localStorage.removeItem('vms_token'); setUser(null); };
 
-  if (!isAuthed) return (
-    <div className="container">
-      <div className="card" style={{ maxWidth: 420, margin: '80px auto', textAlign: 'center' }}>
-        <h2>🎓 Welcome to UniVolve</h2>
-        <p>Volunteer Portal — discover campus events, apply for volunteer roles, and build your portfolio.</p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 16 }}>
-          <button onClick={login}>Login</button>
-          <button className="secondary" onClick={login}>Sign Up</button>
-        </div>
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const { data } = await api.post('/auth/google', { credential: credentialResponse.credential });
+      localStorage.setItem('vms_token', data.token);
+      setUser(data.user);
+      navigate('/');
+    } catch (e) { console.error('Google sign-in failed', e); }
+  };
+
+  if (!token) return (
+    <div className="hero">
+      <span className="logo-pill">🎓 UniVolve</span>
+      <h1>University Volunteering<br />&amp; Event Management</h1>
+      <p>Faculty-wide volunteering platform. Discover campus events, apply for volunteer roles, and build a verifiable portfolio.</p>
+      <div className="hero-actions">
+        <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => console.error('Google sign-in failed')} />
       </div>
     </div>
   );
@@ -44,7 +48,8 @@ export default function App() {
         <Link to="/requests">Volunteer Requests</Link>
         <Link to="/my-applications">My Applications</Link>
         <Link to="/profile">My Profile</Link>
-        <span style={{ marginLeft: 'auto' }}>{user?.full_name} ({user?.system_role})</span>
+        <span style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 500 }}>{user?.full_name}</span>
+        <span className="pill">{user?.system_role}</span>
         <button className="secondary" onClick={logout}>Logout</button>
       </nav>
       <div className="container">

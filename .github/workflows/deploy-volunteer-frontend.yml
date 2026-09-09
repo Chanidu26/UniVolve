@@ -18,6 +18,4 @@ jobs:
           output_location: dist
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
-          VITE_B2C_TENANT: ${{ secrets.VITE_B2C_TENANT }}
-          VITE_CLIENT_ID: ${{ secrets.VITE_VOLUNTEER_CLIENT_ID }}
-          VITE_API_SCOPE: ${{ secrets.VITE_API_SCOPE }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}

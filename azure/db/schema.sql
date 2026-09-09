@@ -4,8 +4,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255),              -- local auth only; NULL when using AD B2C
-    b2c_object_id VARCHAR(100) UNIQUE,       -- adb2cObjectId
+    password_hash VARCHAR(255),              -- unused in azure/ (Google Sign-In only); local/ uses this for password auth
+    b2c_object_id VARCHAR(100) UNIQUE,       -- external IdP subject id (Google's `sub` claim in azure/)
     full_name VARCHAR(150) NOT NULL,
     system_role VARCHAR(20) NOT NULL DEFAULT 'VOLUNTEER'
         CHECK (system_role IN ('VOLUNTEER','SUPER_ADMIN')),

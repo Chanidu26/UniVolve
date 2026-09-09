@@ -6,8 +6,7 @@ const roles = require('../controllers/roleController');
 const apps = require('../controllers/applicationController');
 
 // Auth
-router.post('/auth/register', auth.register);
-router.post('/auth/login', auth.login);
+router.post('/auth/google', auth.googleLogin);
 router.get('/auth/me', authenticate, auth.me);
 router.put('/auth/me', authenticate, auth.updateProfile);
 router.post('/auth/upload-photo', authenticate, auth.uploadPhoto);

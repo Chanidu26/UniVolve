@@ -55,10 +55,10 @@ export default function ManageEvent() {
           <h3 style={{ marginBottom: 12 }}>Volunteer Roles</h3>
           {roles.map(r => (
             <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: '10px 0', borderBottom: '1px solid #eee' }}>
+              padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
               <div>
                 <b>{r.role_name}</b>
-                <span style={{ marginLeft: 8, fontSize: 12.5, color: '#666' }}>{r.filled_slots}/{r.total_slots} filled</span>
+                <span style={{ marginLeft: 8, fontSize: 12.5, color: 'var(--ink-soft)' }}>{r.filled_slots}/{r.total_slots} filled</span>
               </div>
               <button className="secondary" onClick={() => setInviteRoleId(r.id)}
                 disabled={r.filled_slots >= r.total_slots}>Invite Volunteer</button>

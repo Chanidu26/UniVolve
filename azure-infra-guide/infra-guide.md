@@ -1,17 +1,41 @@
-# UniVolve — Manual Azure Infrastructure Guide
+# UniVolve — Azure Infrastructure Guide
 
-This is the full end-to-end guide for provisioning the UniVolve Azure infrastructure **manually via
-the Azure Portal** (no Terraform). It mirrors exactly what the `UniVolve-Infra` Terraform config
-builds, so if you ever want to cross-check a setting, that repo is the reference — but you don't need
-to know Terraform to follow this.
+There are now two ways to provision this: **Terraform** (`azure/terraform/` in this repo — recommended,
+does everything below in one `terraform apply`) or **manually via the Azure Portal** (this document's
+walkthrough, section by section, for anyone who wants to see/build each piece by hand or cross-check a
+setting). Both build the exact same set of resources; the manual steps below mirror `azure/terraform/`
+resource-for-resource, so either document can be used to sanity-check the other.
 
-Whoever is doing this: work through the sections **in order** — later resources reference earlier
-ones (subnets before things that live in them, Key Vault before secrets, etc.).
+**Auth note:** this stack uses plain **Google Sign-In** (a single "Sign in with Google" button, no
+separate sign-up) — not Entra External ID. There's no Azure-side identity tenant to provision; the only
+external-to-Azure step is creating a Google OAuth Client ID (section 16 below), and admin access is a
+plain email allowlist read by the backend, not a role claim from an identity provider.
+
+## Fast path: Terraform
+
+```bash
+cd azure/terraform
+cp terraform.tfvars.example terraform.tfvars   # fill in db_admin_password, google_client_id, jwt_secret,
+                                                 # super_admin_emails, apim_publisher_email
+terraform init
+terraform apply
+```
+
+This provisions everything in sections 1–15 and 17–18 below. Still manual, either way:
+- **Section 16** (Google OAuth Client ID) — a Google Cloud Console step, outside Azure/Terraform's reach.
+- **Section 19** (apply the DB schema) — Terraform pushes the schema into a Key Vault secret
+  (`db-schema`) for reference, but doesn't run it against Postgres itself; you still need network access
+  to the private server to actually apply it.
+- The **Handoff** section at the bottom (GitHub Actions secrets, first deploy order) — same either way.
+
+Everything past this point describes the **manual Portal walkthrough** — skip to section 16 if you used
+Terraform for 1–15/17–18 already.
 
 ## 0. Naming & conventions used below
 
 Replace `univolve-prod` anywhere you see it with your own naming if you like, but stay consistent —
-every resource name below reuses this prefix so they're easy to find together in the Portal.
+every resource name below reuses this prefix so they're easy to find together in the Portal. (Terraform
+calls this the `prefix` variable, default `univolve-prod`.)
 
 Note: the resource group name, the backend Container App's name, and the backend image name are also
 hardcoded as literal strings inside `.github/workflows/deploy-backend.yml` in the `UniVolve` repo (not
@@ -107,7 +131,7 @@ links → + Add** on each zone):
 - Subnet: `snet-private-endpoints`
 - Private DNS zone: `privatelink.azurecr.io` (the one from step 6)
 
-## 8. Storage Account (avatar uploads)
+## 8. Storage Account (avatar + event photo uploads)
 
 **Storage accounts → + Create**
 - Name: `stunivolveprodassets` (globally unique, alphanumeric only, ≤24 characters)
@@ -203,7 +227,7 @@ broken, it just needs time.
 
 ## 14. Key Vault secrets
 
-Before creating the Container App (it references these), add 4 secrets in `kv-univolve-prod` →
+Before creating the Container App (it references these), add 5 secrets in `kv-univolve-prod` →
 **Secrets → + Generate/Import**:
 
 | Secret name | Value |
@@ -211,6 +235,7 @@ Before creating the Container App (it references these), add 4 secrets in `kv-un
 | `db-password` | the Postgres admin password from step 10 |
 | `acs-connection-string` | ACS resource (`acs-univolve-prod`) → Keys → **Connection string** |
 | `storage-connection-string` | Storage account (`stunivolveprodassets`) → Access keys → **Connection string** |
+| `jwt-secret` | a long random value (e.g. `openssl rand -base64 48`) — signs the backend's own session JWTs |
 | `db-schema` | paste the full contents of `azure/db/schema.sql` from the `UniVolve` repo |
 
 ## 15. Container App (backend)
@@ -235,6 +260,7 @@ identity):
 | `db-password` | `db-password` |
 | `acs-connection` | `acs-connection-string` |
 | `storage-connection` | `storage-connection-string` |
+| `jwt-secret` | `jwt-secret` |
 
 **Environment variables** (Container App → Containers → Edit and deploy → Environment variables):
 
@@ -249,64 +275,38 @@ identity):
 | `STORAGE_CONNECTION_STRING` | secret ref → `storage-connection` |
 | `STORAGE_CONTAINER` | `avatars` |
 | `KEY_VAULT_URI` | `https://kv-univolve-prod.vault.azure.net/` |
-| `TENANT_NAME` | Entra External ID tenant short name (step 16) |
-| `TENANT_ID` | Entra External ID tenant GUID (step 16) |
-| `API_CLIENT_ID` | the **API app registration's** client ID (step 16) — not either SPA's |
+| `JWT_SECRET` | secret ref → `jwt-secret` |
+| `GOOGLE_CLIENT_ID` | the OAuth Client ID from step 16 — same value both frontends use |
+| `SUPER_ADMIN_EMAILS` | comma-separated Google account emails to treat as `SUPER_ADMIN` |
 
 **Health probe**: liveness probe, HTTP, path `/health`, port `4000`.
 **Scaling**: min 1 / max 5 replicas, HTTP scale rule at 50 concurrent requests.
 
-## 16. Entra External ID (auth)
+## 16. Google Sign-In (auth)
 
-Entra External ID (CIAM) runs in its **own separate tenant** — a distinct identity directory from the
-Azure AD tenant that owns your subscription/billing. You have to create that tenant first, switch into
-it, and only then create the user flow and app registrations inside it. This is a one-time step per
-project, not per-environment.
+No Azure resource here — this is a Google Cloud Console step, done once.
 
-### 16.0 Create the External ID tenant
+1. [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services** → **Credentials**
+   (create/select a project first if you don't have one for this).
+2. **+ Create Credentials → OAuth client ID**.
+3. If prompted, configure the **OAuth consent screen** first — External user type, app name
+   "UniVolve," your support email; scopes can stay at the default (`email`, `profile`, `openid`).
+4. Application type: **Web application**. Name: `univolve`.
+5. **Authorized JavaScript origins** — add both Static Web App URLs (from step 17, once you have them;
+   you can come back and add these after creating the Static Web Apps):
+   - `https://<admin-swa-hostname>`
+   - `https://<volunteer-swa-hostname>`
+6. No **Authorized redirect URIs** needed — the Google Identity Services button used by both frontends
+   returns the ID token directly to the page via a JS callback, not a redirect.
+7. **Create**. Copy the **Client ID** (looks like `xxxx.apps.googleusercontent.com`) — this is the same
+   value used everywhere: `GOOGLE_CLIENT_ID` on the backend (step 15) and `VITE_GOOGLE_CLIENT_ID` in
+   both frontend deploy workflows (handoff section below).
 
-1. Azure Portal → search **"Microsoft Entra ID"** → **Overview** → **Manage tenants**.
-2. **+ Create**. When asked for the tenant's **configuration**, choose **External configuration** (not
-   *Workforce configuration* — that's for internal/employee identities). This is the CIAM/customer-
-   facing option; depending on your Portal version it may instead be labeled tenant type **"Azure
-   Active Directory (External)"** — same underlying thing, Microsoft has renamed this UI a few times.
-3. Configuration: organization name (e.g. "UniVolve"), initial domain name (e.g. `univolve` → becomes
-   `univolve.onmicrosoft.com` — this is your `TENANT_NAME`), country/region.
-4. On the "Subscription" step, associate an Azure **subscription** and **resource group** for billing —
-   you can point this at `rg-univolve-prod` or any resource group you like; this is just for the
-   tenant resource's own billing record and has nothing to do with where your app resources actually
-   live.
-5. **Review + create**. Tenant provisioning can take a few minutes.
-6. **Switch into the new tenant**: click the account/directory icon (top-right of the Portal) →
-   **Switch directory** → select the tenant you just created (e.g. "univolve"). Everything from here
-   on (user flow, app registrations) must be done **while switched into this tenant** — not the one
-   your subscription normally lives in.
-7. Note the tenant's **Tenant ID** (Entra ID → Overview → Tenant ID, while switched into it) — this is
-   your `TENANT_ID`.
-
-You'll switch back and forth between this identity tenant and your main subscription's tenant
-throughout the rest of setup — Azure resources (Postgres, Key Vault, etc.) stay in your normal
-subscription; only identity/auth objects (user flow, the 3 app registrations below) live in this new
-one.
-
-You need a **User Flow** plus **three** app registrations, all inside this tenant:
-
-1. **User flow**: External Identities → User flows → new "Sign up and sign in" flow (e.g.
-   `SignUpSignIn`), email + password identity provider.
-2. **API app registration** (`univolve-api`): no redirect URI. Expose an API → Application ID URI
-   `api://<its-client-id>` → add scope `access` (Admins and users, enabled). Also add an app role
-   with value `SUPER_ADMIN`, display name `Super administrator`, and allowed member types
-   **Users/Groups**. This app's **client ID** is `API_CLIENT_ID` above.
-3. **Admin SPA app registration** (`univolve-admin-frontend`): redirect URI = Admin Static Web App's
-   URL (platform: Single-page application). API permissions → add `univolve-api`'s `access` scope →
-   grant admin consent. Add this app to the user flow's Applications list. The SPA requests the
-   API scope; the API access token will contain the assigned app role in its `roles` claim.
-4. **Volunteer SPA app registration** (`univolve-volunteer-frontend`): same as above, redirect URI =
-   Volunteer Static Web App's URL. Add to the user flow too.
-
-After the API app role exists, open **Enterprise applications** for `univolve-api` → **Users and
-groups** → **Add user/group**, then assign `SUPER_ADMIN` to the administrator user or group.
-Only users/groups assigned this role are treated as administrators; all others are volunteers.
+**Administrator access** is a plain email allowlist, not a role assigned anywhere in Google or Azure:
+set `SUPER_ADMIN_EMAILS` (step 15) to the Google account email(s) that should be treated as
+`SUPER_ADMIN`. The backend checks the signed-in email against this list on every `/auth/google` call and
+syncs `users.system_role` accordingly — no manual database promotion needed, and removing an email (then
+redeploying the backend, and having that user re-login) removes admin access.
 
 ## 17. Static Web Apps (two portals)
 
@@ -323,6 +323,9 @@ Asia isn't offered for this resource type.
 Each Static Web App has its own **deployment token**: Static Web App → Overview → **Manage deployment
 token**. You'll need both for the handoff below.
 
+Once you have both hostnames, go back to step 16 and add them as Authorized JavaScript origins on the
+Google OAuth client if you skipped that earlier.
+
 ## 18. API Management
 
 **API Management services → + Create**
@@ -337,8 +340,7 @@ Once created:
 1. **APIs → + Add API → HTTP API** (or "Blank API"): name `univolve-api`, path `api`, backend URL =
    the Container App's internal FQDN (Container App → Overview → Application URL — starts with
    `https://ca-backend-univolve-prod...`).
-2. **All operations → Inbound processing → </> (code view)** — paste this policy (fill in your own
-   tenant name / API client ID):
+2. **All operations → Inbound processing → </> (code view)** — paste this policy:
    ```xml
    <policies>
      <inbound>
@@ -348,10 +350,6 @@ Once created:
          <allowed-methods><method>*</method></allowed-methods>
          <allowed-headers><header>*</header></allowed-headers>
        </cors>
-       <validate-jwt header-name="Authorization" failed-validation-httpcode="401">
-         <openid-config url="https://<TENANT_NAME>.ciamlogin.com/<TENANT_NAME>.onmicrosoft.com/v2.0/.well-known/openid-configuration" />
-         <audiences><audience>api://<API_CLIENT_ID></audience></audiences>
-       </validate-jwt>
        <rate-limit calls="100" renewal-period="60" />
      </inbound>
      <backend><base /></backend>
@@ -359,6 +357,8 @@ Once created:
      <on-error><base /></on-error>
    </policies>
    ```
+   No `validate-jwt` here — the backend verifies its own session JWT itself (issued after checking the
+   Google ID token), so APIM doesn't need to know about any external identity provider.
 3. Add a wildcard operation so all routes/methods pass through: **+ Add operation** → method `GET`
    (any), URL template `/*`, display name "All operations."
 
@@ -384,10 +384,7 @@ Actions**. All of the following are **Secrets** (none need to be plain Variables
 | `SWA_ADMIN_DEPLOY_TOKEN` | Step 17 — `swa-admin-univolve-prod`'s deployment token |
 | `SWA_VOLUNTEER_DEPLOY_TOKEN` | Step 17 — `swa-volunteer-univolve-prod`'s deployment token |
 | `VITE_API_URL` | APIM → Overview → **Gateway URL**, with `/api` appended |
-| `VITE_B2C_TENANT` | Entra External ID tenant short name (step 16) |
-| `VITE_API_SCOPE` | `api://<API_CLIENT_ID>/access` (step 16.2) — same value in both frontend workflows |
-| `VITE_ADMIN_CLIENT_ID` | Step 16.3 — admin SPA's own client ID |
-| `VITE_VOLUNTEER_CLIENT_ID` | Step 16.4 — volunteer SPA's own client ID |
+| `VITE_GOOGLE_CLIENT_ID` | Step 16 — the Google OAuth Client ID (same value in both frontend workflows) |
 
 **Getting `AZURE_CREDENTIALS`**: this needs a service principal with rights to push images to ACR and
 update the Container App, created via Cloud Shell:
@@ -406,8 +403,8 @@ Copy the entire JSON it prints into the `AZURE_CREDENTIALS` secret.
    with a placeholder image beforehand; this pipeline run is what actually gets a real image running.)
 2. Push to `azure/admin-frontend/**` and `azure/volunteer-frontend/**` once the rest of the secrets
    above are set — deploys both Static Web Apps.
-3. Assign the `SUPER_ADMIN` app role in Entra External ID to the administrator user or group as
-   described in step 16. The backend reads the verified access token's `roles` claim on every login:
-   users with `SUPER_ADMIN` are synchronized as `SUPER_ADMIN`, and all other users as `VOLUNTEER`.
-   No manual database promotion is required. Existing users synchronize on their next login, and
-   removing the Entra assignment removes administrator access on the next login.
+3. Set `SUPER_ADMIN_EMAILS` on the backend Container App (step 15/16) to the administrator's Google
+   account email, then have them sign in (or re-sign-in if already signed in) via **Sign in with
+   Google**. The backend checks the signed-in email against this list on every login and syncs
+   `users.system_role` accordingly. No manual database promotion is required — removing an email from
+   the list (and redeploying the backend) removes administrator access on that user's next login.
