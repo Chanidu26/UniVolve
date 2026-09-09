@@ -141,3 +141,59 @@ td { padding: 10px 8px; border-bottom: 1px solid #f0f2f5; vertical-align: middle
 .banner-upload { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; }
 .banner-preview { max-height: 80px; border-radius: 6px; }
 
+/* ── NOTIFICATION BELL ── */
+.bell-wrap { position: relative; display: inline-flex; }
+.bell-btn { background: transparent; padding: 4px 6px; font-size: 18px; line-height: 1; position: relative; }
+.bell-btn:hover { background: rgba(255,255,255,.12); }
+.bell-count { position: absolute; top: -2px; right: -4px; background: #e53935; color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; padding: 0 4px; display: flex; align-items: center; justify-content: center; }
+.bell-panel { position: absolute; top: calc(100% + 10px); right: 0; width: 340px; max-height: 420px; background: #fff; color: #1a1a2e; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.22); z-index: 200; display: flex; flex-direction: column; overflow: hidden; }
+.bell-head { padding: 12px 14px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+.bell-link { background: transparent; color: #5c6bc0; padding: 0; font-size: 12px; font-weight: 600; }
+.bell-link:hover { text-decoration: underline; }
+.bell-empty { padding: 22px 16px; font-size: 13px; color: #999; text-align: center; }
+.bell-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; }
+.bell-item { display: flex; gap: 10px; align-items: flex-start; padding: 11px 14px; border-bottom: 1px solid #f2f3f7; cursor: pointer; }
+.bell-item:hover { background: #f5f6ff; }
+.bell-item.unread { background: #eef0ff; }
+.bell-item.unread:hover { background: #e4e8ff; }
+.bell-icon { font-size: 15px; line-height: 1.3; }
+.bell-body { flex: 1; min-width: 0; }
+.bell-title { font-size: 13px; font-weight: 600; }
+.bell-msg { font-size: 12px; color: #555; margin-top: 2px; }
+.bell-time { font-size: 11px; color: #999; margin-top: 3px; }
+.bell-dot { width: 8px; height: 8px; border-radius: 50%; background: #5c6bc0; flex-shrink: 0; margin-top: 5px; }
+
+/* ── BADGE TIERS ── */
+.badge-tiers { display: flex; flex-wrap: wrap; gap: 12px; }
+.tier { flex: 1; min-width: 120px; text-align: center; padding: 14px 10px; border-radius: 10px; border: 2px solid #e8eaf0; background: #fafbff; opacity: .55; filter: grayscale(1); }
+.tier.earned { opacity: 1; filter: none; }
+.tier.earned.bronze { border-color: #cd7f32; background: #fdf3e8; }
+.tier.earned.silver { border-color: #9aa5b1; background: #f4f6f8; }
+.tier.earned.gold   { border-color: #d4af37; background: #fdf8e3; }
+.tier-icon { font-size: 30px; line-height: 1; }
+.tier-name { font-weight: 700; font-size: 14px; margin-top: 6px; color: #1a1a5e; }
+.tier-req { font-size: 12px; color: #777; }
+.tier-state { font-size: 11px; font-weight: 600; text-transform: uppercase; margin-top: 6px; color: #888; letter-spacing: .4px; }
+.tier.earned .tier-state { color: #0a5c36; }
+
+/* ── CERTIFICATE CARD ── */
+.cert-card { border: 2px solid #1a1a5e; border-radius: 10px; overflow: hidden; margin-bottom: 14px; background: #fff; }
+.cert-ribbon { background: #1a1a5e; color: #fff; text-align: center; padding: 8px; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+.cert-body { padding: 24px 20px; text-align: center; }
+.cert-lead { font-size: 12px; color: #777; }
+.cert-name { font-size: 24px; color: #1a1a5e; margin: 6px 0 12px; }
+.cert-hours { font-size: 20px; font-weight: 700; color: #0a5c36; margin: 4px 0 12px; }
+.cert-event { font-size: 17px; color: #1a1a2e; margin: 6px 0 4px; }
+.cert-meta { font-size: 12px; color: #777; }
+.cert-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px dashed #d0d5e0; background: #fafbff; }
+.cert-code-lbl { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: .4px; }
+.cert-code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; font-weight: 700; color: #1a1a5e; letter-spacing: 1px; }
+
+/* Print only the certificate the user asked for, chrome and all other cards hidden. */
+@media print {
+  body * { visibility: hidden; }
+  .cert-print, .cert-print * { visibility: visible; }
+  .cert-print { position: absolute; top: 0; left: 0; width: 100%; border-width: 4px; }
+  .cert-print-btn { display: none; }
+}
+

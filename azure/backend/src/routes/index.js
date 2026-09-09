@@ -38,4 +38,8 @@ router.put('/events/:id/applications/:appId', authenticate, events.requireEventO
 // Attendance & verified hours
 router.use('/', require('./attendance'));
 
+// In-app notifications & certificates
+router.use('/', require('./notifications'));
+router.use('/', require('./certificates'));
+
 module.exports = router;
