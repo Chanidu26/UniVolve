@@ -1,8 +1,9 @@
 const pool = require('../db/pool');
 const { sendStatusEmail } = require('../services/emailService');
+const { asyncWrap } = require('../middleware/errorHandler');
 
 // Volunteer applies (hasAvailableSlot + isDuplicate enforced)
-exports.apply = async (req, res) => {
+exports.apply = asyncWrap(async (req, res) => {
   const { event_role_id } = req.body;
   const client = await pool.connect();
   try {
@@ -23,10 +24,10 @@ exports.apply = async (req, res) => {
     if (e.code === '23505') return res.status(409).json({ error: 'Already applied to this role' });
     throw e;
   } finally { client.release(); }
-};
+});
 
 // Volunteer dashboard (viewMyApplications)
-exports.mine = async (req, res) => {
+exports.mine = asyncWrap(async (req, res) => {
   const { rows } = await pool.query(`
     SELECT a.id, a.status, a.applied_at, a.decided_at, r.role_name,
            e.title AS event_title, e.event_date, e.location
@@ -35,10 +36,10 @@ exports.mine = async (req, res) => {
     JOIN events e ON e.id = r.event_id
     WHERE a.volunteer_id=$1 ORDER BY a.applied_at DESC`, [req.user.sub]);
   res.json(rows);
-};
+});
 
 // Organizer: list applications (includes volunteer profile info)
-exports.listForEvent = async (req, res) => {
+exports.listForEvent = asyncWrap(async (req, res) => {
   const { rows } = await pool.query(`
     SELECT a.id, a.status, a.applied_at, a.decided_at, r.role_name,
            u.id AS volunteer_id, u.full_name, u.email, u.skills, u.bio, u.profile_picture_url
@@ -47,10 +48,10 @@ exports.listForEvent = async (req, res) => {
     JOIN users u ON u.id = a.volunteer_id
     WHERE r.event_id=$1 ORDER BY a.applied_at`, [req.params.id]);
   res.json(rows);
-};
+});
 
 // approve()/reject() — updates filled_slots (reserveSlot/releaseSlot) + decided_at, sends email
-exports.decide = async (req, res) => {
+exports.decide = asyncWrap(async (req, res) => {
   const { status } = req.body; // APPROVED | REJECTED
   if (!['APPROVED', 'REJECTED'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
   const client = await pool.connect();
@@ -84,4 +85,4 @@ exports.decide = async (req, res) => {
     sendStatusEmail(a.volunteer_email, a.event_title, a.role_name, status); // FR-08
     res.json(a);
   } catch (e) { await client.query('ROLLBACK'); throw e; } finally { client.release(); }
-};
+});

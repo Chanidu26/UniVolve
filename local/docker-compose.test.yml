@@ -1,0 +1,14 @@
+# Disposable Postgres for running tests locally.
+# Usage: docker compose -f docker-compose.test.yml up -d
+version: "3.9"
+services:
+  db-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vms
+      POSTGRES_PASSWORD: vms_password
+      POSTGRES_DB: vmsdb_test
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data   # RAM-backed for speed

@@ -141,3 +141,41 @@ td { padding: 10px 8px; border-bottom: 1px solid #f0f2f5; vertical-align: middle
 .banner-upload { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; }
 .banner-preview { max-height: 80px; border-radius: 6px; }
 
+/* ── RESPONSIVE (NFR-04 Usability) ────────────────────────────────── */
+@media (max-width: 768px) {
+  nav { flex-wrap: wrap; padding: 10px 14px; gap: 8px; }
+  nav a { font-size: 13px; }
+  .nav-user { margin-left: 0; width: 100%; justify-content: flex-end; }
+  .container { padding: 0 10px; margin: 14px auto; }
+  .card { padding: 14px; }
+  .modal { width: 95vw; max-height: 90vh; }
+  .filter-bar { flex-direction: column; }
+  .filter-bar input[type="text"],
+  .filter-bar select,
+  .filter-bar input[type="date"] { width: 100%; min-width: unset; }
+  .profile-header { flex-direction: column; text-align: center; }
+  .profile-stats { flex-wrap: wrap; justify-content: center; }
+  table { font-size: 12px; }
+  th, td { padding: 6px 4px; }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tabs { overflow-x: auto; flex-wrap: nowrap; }
+  .tab { white-space: nowrap; padding: 8px 12px; font-size: 13px; }
+  .chip-group { gap: 4px; }
+  .chip { padding: 4px 10px; font-size: 11px; }
+  .card-banner { max-height: 140px; }
+  .slots-bar { margin-top: 6px; }
+  .cell-stack { min-width: 150px; }
+  .row-actions { flex-direction: column; gap: 4px; }
+}
+
+@media (max-width: 480px) {
+  nav a { font-size: 12px; }
+  nav b { font-size: 14px; }
+  button { padding: 6px 12px; font-size: 12px; }
+  .stat .num { font-size: 18px; }
+  .stat .lbl { font-size: 11px; }
+  .avatar-lg { width: 60px; height: 60px; }
+  .modal { width: 98vw; }
+  .card { padding: 10px; margin-bottom: 10px; }
+  input, select, textarea { padding: 8px 10px; font-size: 13px; }
+}

@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const pool = require('../db/pool');
+const { asyncWrap } = require('../middleware/errorHandler');
 
 // ─── Banner upload (local: disk storage) ───────────────────────────
 const uploadDir = process.env.UPLOAD_DIR || '/app/uploads';
@@ -31,7 +32,7 @@ const toArray = (val) => {
 };
 
 // ─── LIST (with search, filter, sort — parameterized) ──────────────
-exports.list = async (req, res) => {
+exports.list = asyncWrap(async (req, res) => {
   const admin = req.user.system_role === 'SUPER_ADMIN';
   const { search, category, status, startDate, endDate, sort } = req.query;
 
@@ -90,10 +91,10 @@ exports.list = async (req, res) => {
     GROUP BY e.id, u.full_name, u.profile_picture_url
     ORDER BY e.event_date ${orderDir}`, params);
   res.json(rows);
-};
+});
 
 // ─── CREATE ────────────────────────────────────────────────────────
-exports.create = async (req, res) => {
+exports.create = asyncWrap(async (req, res) => {
   const { title, description, event_date, location, status, category, tags, banner_image_url } = req.body;
   const { rows } = await pool.query(
     `INSERT INTO events (title, description, event_date, location, status, created_by, category, tags, banner_image_url)
@@ -101,10 +102,10 @@ exports.create = async (req, res) => {
     [title, description, event_date, location, status, req.user.sub,
      category || null, tags ? toArray(tags) : [], banner_image_url || null]);
   res.status(201).json(rows[0]);
-};
+});
 
 // ─── UPDATE ────────────────────────────────────────────────────────
-exports.update = async (req, res) => {
+exports.update = asyncWrap(async (req, res) => {
   const { title, description, event_date, location, status, organizer_id, category, tags, banner_image_url } = req.body;
   const { rows } = await pool.query(
     `UPDATE events SET title=COALESCE($1,title), description=COALESCE($2,description),
@@ -118,13 +119,13 @@ exports.update = async (req, res) => {
      req.params.id]);
   if (!rows[0]) return res.status(404).json({ error: 'Event not found' });
   res.json(rows[0]);
-};
+});
 
 // ─── DELETE ────────────────────────────────────────────────────────
-exports.remove = async (req, res) => {
+exports.remove = asyncWrap(async (req, res) => {
   await pool.query('DELETE FROM events WHERE id=$1', [req.params.id]);
   res.status(204).end();
-};
+});
 
 // ─── UPLOAD BANNER (local — disk) ──────────────────────────────────
 exports.uploadBanner = (req, res) => {
@@ -141,10 +142,10 @@ exports.uploadBanner = (req, res) => {
 };
 
 // ─── MIDDLEWARE: require organizer or SUPER_ADMIN ──────────────────
-exports.requireEventOrganizer = async (req, res, next) => {
+exports.requireEventOrganizer = asyncWrap(async (req, res, next) => {
   if (req.user.system_role === 'SUPER_ADMIN') return next();
   const { rows } = await pool.query('SELECT organizer_id FROM events WHERE id=$1', [req.params.id]);
   if (!rows[0]) return res.status(404).json({ error: 'Event not found' });
   if (rows[0].organizer_id !== req.user.sub) return res.status(403).json({ error: 'Not organizer of this event' });
   next();
-};
+});

@@ -1,13 +1,14 @@
 const router = require('express').Router();
 const { authenticate, requireRole } = require('../middleware/auth');
+const { validate, schemas } = require('../middleware/validator');
 const auth = require('../controllers/authController');
 const events = require('../controllers/eventController');
 const roles = require('../controllers/roleController');
 const apps = require('../controllers/applicationController');
 
 // Auth
-router.post('/auth/register', auth.register);
-router.post('/auth/login', auth.login);
+router.post('/auth/register', validate(schemas.register), auth.register);
+router.post('/auth/login', validate(schemas.login), auth.login);
 router.get('/auth/me', authenticate, auth.me);
 router.put('/auth/me', authenticate, auth.updateProfile);
 router.post('/auth/upload-photo', authenticate, auth.uploadPhoto);
@@ -18,8 +19,8 @@ router.get('/users/:userId', authenticate, auth.viewProfile);
 
 // Events
 router.get('/events', authenticate, events.list);
-router.post('/events', authenticate, requireRole('SUPER_ADMIN'), events.create);
-router.put('/events/:id', authenticate, requireRole('SUPER_ADMIN'), events.update);
+router.post('/events', authenticate, requireRole('SUPER_ADMIN'), validate(schemas.event), events.create);
+router.put('/events/:id', authenticate, requireRole('SUPER_ADMIN'), validate(schemas.eventUpdate), events.update);
 router.delete('/events/:id', authenticate, requireRole('SUPER_ADMIN'), events.remove);
 router.post('/events/:id/banner', authenticate, events.requireEventOrganizer, events.uploadBanner);
 
@@ -30,10 +31,10 @@ router.put('/events/:id/roles/:roleId', authenticate, events.requireEventOrganiz
 router.delete('/events/:id/roles/:roleId', authenticate, events.requireEventOrganizer, roles.remove);
 
 // Applications
-router.post('/applications', authenticate, apps.apply);
+router.post('/applications', authenticate, validate(schemas.application), apps.apply);
 router.get('/applications/mine', authenticate, apps.mine);
 router.get('/events/:id/applications', authenticate, events.requireEventOrganizer, apps.listForEvent);
-router.put('/events/:id/applications/:appId', authenticate, events.requireEventOrganizer, apps.decide);
+router.put('/events/:id/applications/:appId', authenticate, events.requireEventOrganizer, validate(schemas.decide), apps.decide);
 
 // Attendance & verified hours
 router.use('/', require('./attendance'));

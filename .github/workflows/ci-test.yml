@@ -1,0 +1,53 @@
+name: CI - Lint & Test
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: vms
+          POSTGRES_PASSWORD: vms_password
+          POSTGRES_DB: vmsdb_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U vms -d vmsdb_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: local/backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: local/backend
+        run: npm ci || npm install
+
+      - name: Run tests
+        working-directory: local/backend
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: vms
+          DB_PASSWORD: vms_password
+          DB_NAME: vmsdb_test
+          JWT_SECRET: ci-test-secret
+          NODE_ENV: test
+          SMTP_HOST: localhost
+          SMTP_PORT: 1025
+        run: npm test -- --ci --forceExit

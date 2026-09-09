@@ -1,7 +1,8 @@
 const pool = require('../db/pool');
+const { asyncWrap } = require('../middleware/errorHandler');
 
 // Backs the Volunteer Roles table in ManageEvent.jsx.
-exports.list = async (req, res, next) => {
+exports.list = asyncWrap(async (req, res, next) => {
   try {
     const { rows } = await pool.query(`
       SELECT r.id, r.role_name, r.description, r.total_slots, r.filled_slots, r.created_at,
@@ -12,9 +13,9 @@ exports.list = async (req, res, next) => {
        ORDER BY r.created_at`, [req.params.id]);
     res.json(rows);
   } catch (e) { next(e); }
-};
+});
 
-exports.create = async (req, res, next) => {
+exports.create = asyncWrap(async (req, res, next) => {
   try {
     const { role_name, description, total_slots } = req.body;
     if (!role_name || !String(role_name).trim()) {
@@ -35,9 +36,9 @@ exports.create = async (req, res, next) => {
     }
     next(e);
   }
-};
+});
 
-exports.update = async (req, res, next) => {
+exports.update = asyncWrap(async (req, res, next) => {
   try {
     const { role_name, description, total_slots } = req.body;
     let slots = null;
@@ -70,9 +71,9 @@ exports.update = async (req, res, next) => {
     }
     next(e);
   }
-};
+});
 
-exports.remove = async (req, res, next) => {
+exports.remove = asyncWrap(async (req, res, next) => {
   try {
     // applications cascade off event_roles, so deleting a role with applicants
     // would silently destroy their applications. Refuse instead.
@@ -88,4 +89,4 @@ exports.remove = async (req, res, next) => {
     await pool.query('DELETE FROM event_roles WHERE id=$1', [req.params.roleId]);
     res.status(204).end();
   } catch (e) { next(e); }
-};
+});
