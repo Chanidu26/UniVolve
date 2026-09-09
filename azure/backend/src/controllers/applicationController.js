@@ -1,5 +1,6 @@
 const pool = require('../db/pool');
 const { sendStatusEmail } = require('../services/emailService');
+const { notify, TYPES } = require('../services/notificationService');
 
 // Volunteer applies (hasAvailableSlot + isDuplicate enforced)
 exports.apply = async (req, res) => {
@@ -81,7 +82,11 @@ exports.decide = async (req, res) => {
       [status, req.params.appId]);
     await client.query('COMMIT');
     const a = rows[0];
-    sendStatusEmail(a.volunteer_email, a.event_title, a.role_name, status); // FR-08
+    sendStatusEmail(a.volunteer_email, a.event_title, a.role_name, status); // FR-08 (email)
+    notify(a.volunteer_id,                                                  // FR-08 (in-app)
+      status === 'APPROVED' ? TYPES.APPLICATION_APPROVED : TYPES.APPLICATION_REJECTED,
+      `Application ${status.toLowerCase()}`,
+      `Your application for ${a.role_name} at "${a.event_title}" was ${status.toLowerCase()}.`);
     res.json(a);
   } catch (e) { await client.query('ROLLBACK'); throw e; } finally { client.release(); }
 };

@@ -6,6 +6,8 @@ import MyApplications from './pages/MyApplications.jsx';
 import Profile from './pages/Profile.jsx';
 import ViewProfile from './pages/ViewProfile.jsx';
 import ManageEvent from './pages/ManageEvent.jsx';
+import Certificates from './pages/Certificates.jsx';
+import NotificationBell from './components/NotificationBell.jsx';
 import api from './api/client.js';
 import { loginRequest } from './auth/msalConfig.js';
 
@@ -37,14 +39,17 @@ export default function App() {
         <b>🎓 University VMS</b>
         <Link to="/">Events</Link>
         <Link to="/my-applications">My Applications</Link>
+        <Link to="/certificates">Certificates</Link>
         <Link to="/profile">My Profile</Link>
         <span style={{ marginLeft: 'auto' }}>{user?.full_name} ({user?.system_role})</span>
+        <NotificationBell />
         <button className="secondary" onClick={logout}>Logout</button>
       </nav>
       <div className="container">
         <Routes>
           <Route path="/" element={<Events user={user} />} />
           <Route path="/my-applications" element={<MyApplications />} />
+          <Route path="/certificates" element={<Certificates />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:userId" element={<ViewProfile />} />
           <Route path="/manage/:id" element={<ManageEvent />} />

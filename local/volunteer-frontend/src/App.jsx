@@ -7,7 +7,9 @@ import MyApplications from './pages/MyApplications.jsx';
 import ManageEvent from './pages/ManageEvent.jsx';
 import Profile from './pages/Profile.jsx';
 import ViewProfile from './pages/ViewProfile.jsx';
+import Certificates from './pages/Certificates.jsx';
 import Avatar from './components/Avatar.jsx';
+import NotificationBell from './components/NotificationBell.jsx';
 import api from './api/client.js';
 
 export default function App() {
@@ -28,7 +30,9 @@ export default function App() {
         {user && <>
           <Link to="/">Events</Link>
           <Link to="/my-applications">My Applications</Link>
+          <Link to="/certificates">Certificates</Link>
           <div className="nav-user">
+            <NotificationBell />
             <span style={{ fontSize: 13, color: '#cfd8ff' }}>{user.full_name}</span>
             <Avatar name={user.full_name} url={user.profile_picture_url} size={34}
               onClick={() => navigate('/profile')} />
@@ -43,6 +47,7 @@ export default function App() {
           <Route path="/" element={token ? <Events user={user} /> : <Navigate to="/login" />} />
           <Route path="/my-applications" element={<MyApplications />} />
           <Route path="/manage/:id" element={<ManageEvent />} />
+          <Route path="/certificates" element={token ? <Certificates /> : <Navigate to="/login" />} />
           <Route path="/profile" element={<Profile onUpdate={setUser} />} />
           <Route path="/profile/:userId" element={<ViewProfile />} />
         </Routes>
