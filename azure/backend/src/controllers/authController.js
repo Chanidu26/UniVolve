@@ -12,6 +12,7 @@ const toArray = (val) => {
 // Azure: store in memory then stream to Blob Storage
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } }).single('photo');
 
+
 exports.uploadPhoto = (req, res) => {
   upload(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
