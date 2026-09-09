@@ -21,7 +21,8 @@ async function initializeSchema() {
     const schema = schemaSecret.value;
     
     // Check if ANY expected table is missing
-    const expectedTables = ['users', 'events', 'event_roles', 'applications', 'attendance'];
+    const expectedTables = ['users', 'events', 'event_roles', 'applications', 'attendance',
+                            'notifications', 'certificates'];
     const { rows } = await pool.query(
       `SELECT array_agg(table_name) as tables FROM information_schema.tables 
        WHERE table_schema='public' AND table_name = ANY($1)`,

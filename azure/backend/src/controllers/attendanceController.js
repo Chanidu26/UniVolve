@@ -1,4 +1,5 @@
 const pool = require('../db/pool');
+const { notify, TYPES } = require('../services/notificationService');
 
 const STATUSES = ['PRESENT', 'ABSENT', 'EXCUSED'];
 
@@ -152,10 +153,16 @@ exports.verifyHours = async (req, res, next) => {
         verified_by  = EXCLUDED.verified_by,
         verified_at  = NOW(),
         updated_at   = NOW()
-      RETURNING *`,
+      RETURNING *, (SELECT title FROM events WHERE id = attendance.event_id) AS event_title`,
       [app.id, req.params.id, app.volunteer_id, hours, req.user.sub]);
 
-    res.json(rows[0]);
+    const att = rows[0];
+    // FR-08 in-app: the volunteer's hours are now countable towards their
+    // badges and certificate, so tell them. Non-fatal, like sendStatusEmail.
+    notify(att.volunteer_id, TYPES.HOURS_VERIFIED, 'Hours verified ✅',
+      `${Number(att.hours_logged).toFixed(2)} volunteering hours were verified for "${att.event_title}".`);
+
+    res.json(att);
   } catch (e) { next(e); }
 };
 

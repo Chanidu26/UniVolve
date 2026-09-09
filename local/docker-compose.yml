@@ -16,6 +16,7 @@ services:
       # each new migration gets the next NN_ prefix here.
       - ./db/init.sql:/docker-entrypoint-initdb.d/01_init.sql
       - ./db/migrations/002_attendance.sql:/docker-entrypoint-initdb.d/02_002_attendance.sql
+      - ./db/migrations/004_notifications_certificates.sql:/docker-entrypoint-initdb.d/04_004_notifications_certificates.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U vms -d vmsdb"]
       interval: 5s
