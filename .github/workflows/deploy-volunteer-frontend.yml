@@ -1,5 +1,8 @@
 name: Deploy Volunteer Frontend to Azure Static Web Apps
 on:
+  push:
+    branches: [chanidu]
+    paths: ["azure/volunteer-frontend/**"]
   workflow_dispatch: {}
 jobs:
   deploy:
