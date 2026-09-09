@@ -1,8 +1,5 @@
 name: Deploy Volunteer Frontend to Azure Static Web Apps
 on:
-  push:
-    branches: [main]
-    paths: ["azure/volunteer-frontend/**"]
   workflow_dispatch: {}
 jobs:
   deploy:
