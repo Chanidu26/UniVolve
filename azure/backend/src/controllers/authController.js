@@ -12,7 +12,6 @@ const toArray = (val) => {
   return val.split(',').map(s => s.trim()).filter(Boolean);
 };
 
-
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // No external IdP role claim anymore, so admin status is a plain email allowlist —
 // set SUPER_ADMIN_EMAILS to a comma-separated list of admin Google accounts.

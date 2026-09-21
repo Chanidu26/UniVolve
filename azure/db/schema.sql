@@ -1,7 +1,7 @@
 -- VMS Database Schema (aligned to CA01 Class Diagram)
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255),              -- unused in azure/ (Google Sign-In only); local/ uses this for password auth
@@ -16,7 +16,7 @@ CREATE TABLE users (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE events (
+CREATE TABLE IF NOT EXISTS events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(200) NOT NULL,
     description TEXT,
@@ -29,10 +29,10 @@ CREATE TABLE events (
     organizer_id UUID REFERENCES users(id),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE INDEX idx_events_date ON events(event_date);
-CREATE INDEX idx_events_status ON events(status);
+CREATE INDEX IF NOT EXISTS idx_events_date ON events(event_date);
+CREATE INDEX IF NOT EXISTS idx_events_status ON events(status);
 
-CREATE TABLE event_roles (
+CREATE TABLE IF NOT EXISTS event_roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
     role_name VARCHAR(100) NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE event_roles (
     CHECK (filled_slots <= total_slots)
 );
 
-CREATE TABLE applications (
+CREATE TABLE IF NOT EXISTS applications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     event_role_id UUID NOT NULL REFERENCES event_roles(id) ON DELETE CASCADE,
     volunteer_id UUID NOT NULL REFERENCES users(id),
@@ -56,7 +56,7 @@ CREATE TABLE applications (
     decided_at TIMESTAMPTZ,
     UNIQUE(event_role_id, volunteer_id)       -- isDuplicate()
 );
-CREATE INDEX idx_apps_volunteer ON applications(volunteer_id);
-CREATE INDEX idx_apps_status ON applications(status);
+CREATE INDEX IF NOT EXISTS idx_apps_volunteer ON applications(volunteer_id);
+CREATE INDEX IF NOT EXISTS idx_apps_status ON applications(status);
 
 -- system_role is synchronized from the verified Entra app-role claim on login.
