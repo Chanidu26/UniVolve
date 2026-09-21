@@ -11,7 +11,6 @@ export default function App() {
   const navigate = useNavigate();
   const token = localStorage.getItem('vms_token');
 
-  
   useEffect(() => {
     if (token) api.get('/auth/me').then(r => setUser(r.data)).catch(logout);
   }, [token]);
