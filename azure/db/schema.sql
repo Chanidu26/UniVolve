@@ -1,8 +1,8 @@
 -- VMS Database Schema (aligned to CA01 Class Diagram)
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255),              -- unused in azure/ (Google Sign-In only); local/ uses this for password auth
     b2c_object_id VARCHAR(100) UNIQUE,       -- external IdP subject id (Google's `sub` claim in azure/)
@@ -17,7 +17,7 @@ CREATE TABLE users (
 );
 
 CREATE TABLE events (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(200) NOT NULL,
     description TEXT,
     event_date TIMESTAMPTZ NOT NULL,
@@ -33,7 +33,7 @@ CREATE INDEX idx_events_date ON events(event_date);
 CREATE INDEX idx_events_status ON events(status);
 
 CREATE TABLE event_roles (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
     role_name VARCHAR(100) NOT NULL,
     description TEXT,
@@ -45,7 +45,7 @@ CREATE TABLE event_roles (
 );
 
 CREATE TABLE applications (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     event_role_id UUID NOT NULL REFERENCES event_roles(id) ON DELETE CASCADE,
     volunteer_id UUID NOT NULL REFERENCES users(id),
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING'
