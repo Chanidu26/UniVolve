@@ -8,23 +8,29 @@ import api from './api/client.js';
 
 export default function App() {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem('vms_token'));
+  const [authError, setAuthError] = useState('');
   const navigate = useNavigate();
-  const token = localStorage.getItem('vms_token');
 
   
   useEffect(() => {
     if (token) api.get('/auth/me').then(r => setUser(r.data)).catch(logout);
   }, [token]);
 
-  const logout = () => { localStorage.removeItem('vms_token'); setUser(null); };
+  const logout = () => { localStorage.removeItem('vms_token'); setToken(null); setUser(null); };
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const { data } = await api.post('/auth/google', { credential: credentialResponse.credential });
       localStorage.setItem('vms_token', data.token);
+      setToken(data.token);
       setUser(data.user);
       navigate('/');
-    } catch (e) { console.error('Google sign-in failed', e); }
+    } catch (e) {
+      const message = e.response?.data?.error || `Sign-in failed (${e.response?.status || 'network error'})`;
+      setAuthError(message);
+      console.error('Google sign-in failed', e);
+    }
   };
 
   if (!token) return (
@@ -34,6 +40,7 @@ export default function App() {
       <p>Manage campus events, define volunteer roles, and review applications for the Faculty of Engineering.</p>
       <div className="hero-actions">
         <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => console.error('Google sign-in failed')} />
+        {authError && <p role="alert">{authError}</p>}
       </div>
     </div>
   );
