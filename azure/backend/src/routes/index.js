@@ -5,7 +5,6 @@ const events = require('../controllers/eventController');
 const roles = require('../controllers/roleController');
 const apps = require('../controllers/applicationController');
 
-
 // Auth
 router.post('/auth/google', auth.googleLogin);
 router.get('/auth/me', authenticate, auth.me);
