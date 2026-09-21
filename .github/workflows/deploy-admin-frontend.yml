@@ -1,7 +1,7 @@
 name: Deploy Admin Frontend to Azure Static Web Apps
 on:
   push:
-    branches: [chanidu]
+    branches: [dev-chanidu]
     paths: ["azure/admin-frontend/**"]
   workflow_dispatch: {}
 jobs:
