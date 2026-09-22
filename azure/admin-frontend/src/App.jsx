@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
+import { Toaster } from 'react-hot-toast';
 import AdminEvents from './pages/AdminEvents.jsx';
 import ManageEvent from './pages/ManageEvent.jsx';
 import ViewProfile from './pages/ViewProfile.jsx';
@@ -12,7 +13,6 @@ export default function App() {
   const [authError, setAuthError] = useState('');
   const navigate = useNavigate();
 
-  
   useEffect(() => {
     if (token) api.get('/auth/me').then(r => setUser(r.data)).catch(logout);
   }, [token]);
@@ -47,6 +47,7 @@ export default function App() {
 
   return (
     <>
+      <Toaster position="top-right" toastOptions={{ duration: 2800 }} />
       <nav>
         <b>🎓 UniVolve — Admin</b>
         <span style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 500 }}>{user?.full_name}</span>

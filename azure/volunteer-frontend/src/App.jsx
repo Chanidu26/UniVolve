@@ -1,6 +1,7 @@
 import { Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
+import { Toaster } from 'react-hot-toast';
 import Events from './pages/Events.jsx';
 import MyApplications from './pages/MyApplications.jsx';
 import VolunteerRequests from './pages/VolunteerRequests.jsx';
@@ -15,7 +16,6 @@ export default function App() {
   const [authError, setAuthError] = useState('');
   const navigate = useNavigate();
 
-  
   useEffect(() => {
     if (token) api.get('/auth/me').then(r => setUser(r.data)).catch(logout);
   }, [token]);
@@ -50,6 +50,7 @@ export default function App() {
 
   return (
     <>
+      <Toaster position="top-right" toastOptions={{ duration: 2800 }} />
       <nav>
         <b>🎓 UniVolve</b>
         <Link to="/">Events</Link>
