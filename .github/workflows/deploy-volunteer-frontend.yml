@@ -1,8 +1,9 @@
 name: Deploy Volunteer Frontend to Azure Static Web Apps
 on:
   push:
-    branches: [main]
+    branches: [dev-chanidu]
     paths: ["azure/volunteer-frontend/**"]
+  workflow_dispatch: {}
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -17,6 +18,4 @@ jobs:
           output_location: dist
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
-          VITE_B2C_TENANT: ${{ secrets.VITE_B2C_TENANT }}
-          VITE_CLIENT_ID: ${{ secrets.VITE_VOLUNTEER_CLIENT_ID }}
-          VITE_API_SCOPE: ${{ secrets.VITE_API_SCOPE }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}

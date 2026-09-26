@@ -1,8 +1,9 @@
 name: Deploy Backend to Azure Container Apps
 on:
   push:
-    branches: [main]
+    branches: [dev-chanidu]
     paths: ["azure/backend/**"]
+  workflow_dispatch: {}
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
@@ -15,7 +16,9 @@ jobs:
         run: |
           az acr login --name ${{ secrets.ACR_NAME }}
           docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/univolve-backend:${{ github.sha }} ./azure/backend
+          docker tag ${{ secrets.ACR_NAME }}.azurecr.io/univolve-backend:${{ github.sha }} ${{ secrets.ACR_NAME }}.azurecr.io/univolve-backend:latest
           docker push ${{ secrets.ACR_NAME }}.azurecr.io/univolve-backend:${{ github.sha }}
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/univolve-backend:latest
       - name: Update Container App
         run: |
           az containerapp update \

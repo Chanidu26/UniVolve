@@ -2,81 +2,38 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const pool = require('../db/pool');
+const { sendOrganizerAssignedEmail } = require('../services/emailService');
 
-// ─── Banner upload (local: disk storage) ───────────────────────────
 const uploadDir = process.env.UPLOAD_DIR || '/app/uploads';
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-const bannerStorage = multer.diskStorage({
+const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `banner_${req.params.id}_${Date.now()}${ext}`);
-  },
+  filename: (req, file, cb) => cb(null, `event_${req.params.id}_${Date.now()}${path.extname(file.originalname).toLowerCase()}`),
 });
-const bannerUpload = multer({
-  storage: bannerStorage,
-  limits: { fileSize: 2 * 1024 * 1024 },
+const upload = multer({
+  storage,
+  limits: { fileSize: 4 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
     cb(null, allowed.includes(path.extname(file.originalname).toLowerCase()));
   },
-}).single('banner');
+}).single('photo');
 
-// ─── Helpers ───────────────────────────────────────────────────────
-const toArray = (val) => {
-  if (!val) return [];
-  if (Array.isArray(val)) return val;
-  return val.split(',').map(s => s.trim()).filter(Boolean);
+exports.uploadPhoto = (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const url = `/uploads/${req.file.filename}`;
+    const { rows } = await pool.query(
+      `UPDATE events SET image_url=$1 WHERE id=$2 RETURNING *`, [url, req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Event not found' });
+    res.json(rows[0]);
+  });
 };
 
-// ─── LIST (with search, filter, sort — parameterized) ──────────────
 exports.list = async (req, res) => {
   const admin = req.user.system_role === 'SUPER_ADMIN';
-  const { search, category, status, startDate, endDate, sort } = req.query;
-
-  const conditions = [];
-  const params = [];
-  let idx = 1;
-
-  // Non-admin users can only see PUBLISHED events
-  if (!admin) {
-    conditions.push(`e.status = $${idx++}`);
-    params.push('PUBLISHED');
-  } else if (status) {
-    conditions.push(`e.status = $${idx++}`);
-    params.push(status);
-  }
-
-  // Category filter
-  if (category) {
-    conditions.push(`e.category = $${idx++}`);
-    params.push(category);
-  }
-
-  // Date range
-  if (startDate) {
-    conditions.push(`e.event_date >= $${idx++}`);
-    params.push(startDate);
-  }
-  if (endDate) {
-    conditions.push(`e.event_date <= $${idx++}`);
-    params.push(endDate);
-  }
-
-  // Full-text search on title + description, ILIKE on location
-  if (search) {
-    conditions.push(
-      `(to_tsvector('english', COALESCE(e.title,'') || ' ' || COALESCE(e.description,'')) @@ plainto_tsquery('english', $${idx})
-        OR e.location ILIKE '%' || $${idx} || '%')`
-    );
-    params.push(search);
-    idx++;
-  }
-
-  const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
-  const orderDir = sort === 'date_desc' ? 'DESC' : 'ASC';
-
   const { rows } = await pool.query(`
     SELECT e.*, u.full_name AS organizer_name, u.profile_picture_url AS organizer_picture,
       COALESCE(json_agg(json_build_object(
@@ -86,61 +43,44 @@ exports.list = async (req, res) => {
     FROM events e
     LEFT JOIN users u ON u.id = e.organizer_id
     LEFT JOIN event_roles r ON r.event_id = e.id
-    ${where}
+    ${admin ? '' : "WHERE e.status = 'PUBLISHED'"}
     GROUP BY e.id, u.full_name, u.profile_picture_url
-    ORDER BY e.event_date ${orderDir}`, params);
+    ORDER BY e.event_date ASC`);
   res.json(rows);
 };
 
-// ─── CREATE ────────────────────────────────────────────────────────
 exports.create = async (req, res) => {
-  const { title, description, event_date, location, status, category, tags, banner_image_url } = req.body;
+  const { title, description, event_date, location, status } = req.body;
   const { rows } = await pool.query(
-    `INSERT INTO events (title, description, event_date, location, status, created_by, category, tags, banner_image_url)
-     VALUES ($1,$2,$3,$4,COALESCE($5,'DRAFT'),$6,$7,$8,$9) RETURNING *`,
-    [title, description, event_date, location, status, req.user.sub,
-     category || null, tags ? toArray(tags) : [], banner_image_url || null]);
+    `INSERT INTO events (title, description, event_date, location, status, created_by)
+     VALUES ($1,$2,$3,$4,COALESCE($5,'DRAFT'),$6) RETURNING *`,
+    [title, description, event_date, location, status, req.user.sub]);
   res.status(201).json(rows[0]);
 };
 
-// ─── UPDATE ────────────────────────────────────────────────────────
 exports.update = async (req, res) => {
-  const { title, description, event_date, location, status, organizer_id, category, tags, banner_image_url } = req.body;
+  const { title, description, event_date, location, status, organizer_id } = req.body;
+  const { rows: before } = await pool.query('SELECT organizer_id FROM events WHERE id=$1', [req.params.id]);
+  if (!before[0]) return res.status(404).json({ error: 'Event not found' });
   const { rows } = await pool.query(
     `UPDATE events SET title=COALESCE($1,title), description=COALESCE($2,description),
      event_date=COALESCE($3,event_date), location=COALESCE($4,location),
-     status=COALESCE($5,status), organizer_id=COALESCE($6,organizer_id),
-     category=COALESCE($7,category), tags=COALESCE($8,tags),
-     banner_image_url=COALESCE($9,banner_image_url)
-     WHERE id=$10 RETURNING *`,
-    [title, description, event_date, location, status, organizer_id,
-     category || null, tags != null ? toArray(tags) : null, banner_image_url || null,
-     req.params.id]);
-  if (!rows[0]) return res.status(404).json({ error: 'Event not found' });
-  res.json(rows[0]);
+     status=COALESCE($5,status), organizer_id=COALESCE($6,organizer_id)
+     WHERE id=$7 RETURNING *`,
+    [title, description, event_date, location, status, organizer_id, req.params.id]);
+  const event = rows[0];
+  if (organizer_id && organizer_id !== before[0].organizer_id) {
+    const { rows: organizer } = await pool.query('SELECT email FROM users WHERE id=$1', [organizer_id]);
+    if (organizer[0]) sendOrganizerAssignedEmail(organizer[0].email, event.title, event.event_date);
+  }
+  res.json(event);
 };
 
-// ─── DELETE ────────────────────────────────────────────────────────
 exports.remove = async (req, res) => {
   await pool.query('DELETE FROM events WHERE id=$1', [req.params.id]);
   res.status(204).end();
 };
 
-// ─── UPLOAD BANNER (local — disk) ──────────────────────────────────
-exports.uploadBanner = (req, res) => {
-  bannerUpload(req, res, async (err) => {
-    if (err) return res.status(400).json({ error: err.message });
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    const url = `/uploads/${req.file.filename}`;
-    const { rows } = await pool.query(
-      `UPDATE events SET banner_image_url=$1 WHERE id=$2 RETURNING *`,
-      [url, req.params.id]);
-    if (!rows[0]) return res.status(404).json({ error: 'Event not found' });
-    res.json({ url, event: rows[0] });
-  });
-};
-
-// ─── MIDDLEWARE: require organizer or SUPER_ADMIN ──────────────────
 exports.requireEventOrganizer = async (req, res, next) => {
   if (req.user.system_role === 'SUPER_ADMIN') return next();
   const { rows } = await pool.query('SELECT organizer_id FROM events WHERE id=$1', [req.params.id]);

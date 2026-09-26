@@ -13,7 +13,7 @@ router.put('/auth/me', authenticate, auth.updateProfile);
 router.post('/auth/upload-photo', authenticate, auth.uploadPhoto);
 
 // Users
-router.get('/users', authenticate, requireRole('SUPER_ADMIN'), auth.listVolunteers);
+router.get('/users', authenticate, auth.listVolunteers);
 router.get('/users/:userId', authenticate, auth.viewProfile);
 
 // Events
@@ -21,10 +21,9 @@ router.get('/events', authenticate, events.list);
 router.post('/events', authenticate, requireRole('SUPER_ADMIN'), events.create);
 router.put('/events/:id', authenticate, requireRole('SUPER_ADMIN'), events.update);
 router.delete('/events/:id', authenticate, requireRole('SUPER_ADMIN'), events.remove);
-router.post('/events/:id/banner', authenticate, events.requireEventOrganizer, events.uploadBanner);
+router.post('/events/:id/photo', authenticate, requireRole('SUPER_ADMIN'), events.uploadPhoto);
 
 // Event roles
-router.get('/events/:id/roles', authenticate, events.requireEventOrganizer, roles.list);
 router.post('/events/:id/roles', authenticate, events.requireEventOrganizer, roles.create);
 router.put('/events/:id/roles/:roleId', authenticate, events.requireEventOrganizer, roles.update);
 router.delete('/events/:id/roles/:roleId', authenticate, events.requireEventOrganizer, roles.remove);
@@ -32,10 +31,9 @@ router.delete('/events/:id/roles/:roleId', authenticate, events.requireEventOrga
 // Applications
 router.post('/applications', authenticate, apps.apply);
 router.get('/applications/mine', authenticate, apps.mine);
+router.put('/applications/:appId/respond', authenticate, apps.respond);
 router.get('/events/:id/applications', authenticate, events.requireEventOrganizer, apps.listForEvent);
 router.put('/events/:id/applications/:appId', authenticate, events.requireEventOrganizer, apps.decide);
-
-// Attendance & verified hours
-router.use('/', require('./attendance'));
+router.post('/events/:id/roles/:roleId/invite', authenticate, events.requireEventOrganizer, apps.invite);
 
 module.exports = router;

@@ -3,7 +3,7 @@ import api from '../api/client.js';
 
 export default function MyApplications() {
   const [apps, setApps] = useState([]);
-  useEffect(() => { api.get('/applications/mine').then(r => setApps(r.data)); }, []);
+  useEffect(() => { api.get('/applications/mine').then(r => setApps(r.data.filter(a => a.status !== 'INVITED'))); }, []);
   return (
     <>
       <h2>My Applications</h2>

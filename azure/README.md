@@ -10,11 +10,13 @@ each deployed to its own Azure Static Web App:
                     Admin Portal (azure/admin-frontend)  ──┐
 Users ──HTTPS──►                                            ├──► Azure Static Web Apps
                     Volunteer Portal (azure/volunteer-frontend)┘
-   │                       │  MSAL login
+   │                       │  Sign in with Google (ID token)
    │                       ▼
-   │           Entra External ID  (JWT with role claims)
+   │              Google OAuth 2.0 / OIDC
    │                       │
-   └──HTTPS + JWT──► Azure API Management  ── validate-jwt, rate-limit
+   │              POST /auth/google ──► backend verifies ID token,
+   │                       │            mints its own signed JWT
+   └──HTTPS + JWT──► Azure API Management  ── rate-limit
                            │  (VNet)
                            ▼
                  Azure Container Apps (backend, internal-only)
@@ -25,18 +27,23 @@ Users ──HTTPS──►                                            ├──�
               Azure Communication Services ──► email to volunteers
 ```
 
+**Auth note:** this variant uses plain **Google Sign-In**, not Entra External ID — there's a single
+"Sign in with Google" button (no separate sign-up) on both portals. The backend verifies the Google
+ID token once via `google-auth-library`, JIT-provisions/updates the local `users` row, and issues its
+own session JWT (`JWT_SECRET`) for subsequent API calls — the same pattern the `local/` variant uses
+for its username/password login, just with Google as the identity source instead of a password. Admin
+status is a plain email allowlist (`SUPER_ADMIN_EMAILS`) since there's no external IdP role claim to
+read anymore. Since APIM no longer validates a third-party-issued JWT (our own backend does), the
+`validate-jwt` policy referenced in the infra guide is no longer applicable — the gateway now only
+needs rate-limiting/CORS.
+
 ## Deploy steps
-1. **Create the Entra External ID tenant manually** (Terraform can't create it), with **three**
-   app registrations:
-   - One **API** app registration representing the backend — expose an API scope named `access`
-     (this sets its Application ID URI, typically defaulted to `api://<api-app-client-id>`).
-   - Two **SPA** app registrations, one for `admin-frontend` and one for `volunteer-frontend`
-     (redirect URI = each app's Static Web App URL) — grant each a delegated API permission to the
-     API app's `access` scope.
-   - Note the tenant name, tenant GUID, the **API app's** client ID (this is `api_client_id` in
-     Terraform — APIM and the backend validate every token's audience against it, regardless of
-     which SPA acquired the token), and **both SPA client IDs** (these only ever go into each
-     frontend's own build — `VITE_CLIENT_ID` — Terraform/the backend never see them).
+1. **Create a Google OAuth 2.0 Client ID** (Google Cloud Console → APIs & Services → Credentials →
+   Create Credentials → OAuth client ID → Application type: Web application):
+   - Add both Static Web App URLs (admin + volunteer) under **Authorized JavaScript origins**.
+   - No redirect URI needed — Google Identity Services' one-tap/button flow used here returns the
+     ID token directly to the page via a JS callback, not a redirect.
+   - Both frontends share the **same** client ID.
 2. **Provision infrastructure**:
    ```bash
    cd terraform
@@ -56,18 +63,13 @@ Users ──HTTPS──►                                            ├──�
 5. **Deploy both frontends**: push to GitHub with the workflows in `.github/workflows/`
    (`deploy-admin-frontend.yml`, `deploy-volunteer-frontend.yml`), setting secrets:
    `SWA_ADMIN_DEPLOY_TOKEN` / `SWA_VOLUNTEER_DEPLOY_TOKEN` (terraform outputs), `AZURE_CREDENTIALS`,
-   `ACR_NAME`, `VITE_API_URL` (APIM gateway url + /api), `VITE_B2C_TENANT`,
-   `VITE_API_SCOPE` = `api://<api-app-client-id>/access` (same value in both workflows), and the
-   two SPA-specific `VITE_ADMIN_CLIENT_ID` / `VITE_VOLUNTEER_CLIENT_ID` values.
-6. **Configure automatic administrator assignment** in Entra External ID:
-   - In the API app registration, create an app role with value `SUPER_ADMIN`
-     (allowed member type: Users/Groups).
-   - Assign that app role to the administrator user or an administrator group.
-   - Ensure both SPA app registrations request the API `access` scope. The resulting
-     access token will contain the verified `roles` claim.
-   - On every login, the backend maps `roles: ['SUPER_ADMIN']` to
-     `users.system_role = 'SUPER_ADMIN'`. Users without that claim are stored as
-     `VOLUNTEER`.
+   `ACR_NAME`, `VITE_API_URL` (APIM gateway url + /api), and `VITE_GOOGLE_CLIENT_ID` (same value in
+   both workflows).
+6. **Configure administrator access**: set the backend's `SUPER_ADMIN_EMAILS` environment variable
+   (Container App → Environment variables) to a comma-separated list of the Google account emails
+   that should be treated as `SUPER_ADMIN`. On every login, the backend checks the signed-in Google
+   email against this list and syncs `users.system_role` accordingly.
 
-   No manual SQL promotion is required. Existing users are synchronized on their next
-   login, so removing the Entra app-role assignment also removes administrator access.
+   No manual SQL promotion is required. Existing users are synchronized on their next login, so
+   removing an email from `SUPER_ADMIN_EMAILS` (and redeploying the backend) also removes
+   administrator access on that user's next login.

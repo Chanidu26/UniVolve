@@ -5,7 +5,19 @@ const routes = require('./routes');
 const pool = require('./db/pool');
 
 const app = express();
-app.use(cors({ origin: (process.env.ALLOWED_ORIGINS || '*').split(',') }));
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '*')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin: (requestOrigin, callback) => {
+    if (!requestOrigin || allowedOrigins.includes('*') || allowedOrigins.includes(requestOrigin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Origin not allowed by CORS'));
+  },
+}));
 app.use(express.json());
 app.get('/health', (_, res) => res.json({ status: 'ok' }));
 app.use('/api', routes);
