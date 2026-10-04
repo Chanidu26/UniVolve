@@ -21,6 +21,7 @@ export default function Profile({ onUpdate }) {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
   const fileRef = useRef();
 
   useEffect(() => {
@@ -36,6 +37,7 @@ export default function Profile({ onUpdate }) {
         return rest.length ? { platform, url: rest.join('::') } : { platform: 'Other', url: raw };
       }));
       api.get(`/users/${u.id}/stats`).then(r => setStats(r.data));
+      api.get(`/users/${u.id}/recommendations`).then(r => setRecommendations(r.data));
     });
   }, []);
 
@@ -90,6 +92,11 @@ export default function Profile({ onUpdate }) {
       <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
         <div><h3>Verified volunteer history</h3><p style={{ color: '#666', marginTop: 6 }}>{stats?.completed_events || 0} completed events · {stats?.volunteer_hours || 0} hours · {stats?.endorsements?.length || 0} endorsements</p></div>
         <button className="secondary" onClick={exportResume}>Export résumé</button>
+      </div>
+      <div className="card">
+        <h3>Recommendations</h3>
+        {recommendations.length === 0 && <p style={{ color: '#999', marginTop: 8 }}>No recommendations yet.</p>}
+        {recommendations.map(r => <div key={r.id} style={{ padding: 12, background: '#f8f9ff', borderRadius: 8, marginTop: 10 }}><p style={{ margin: 0, lineHeight: 1.5 }}>{r.text}</p><small style={{ color: '#777' }}>Recommended by {r.recommender_name}</small></div>)}
       </div>
 
       {/* ── Photo ── */}
