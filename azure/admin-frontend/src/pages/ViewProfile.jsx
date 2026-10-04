@@ -100,7 +100,7 @@ export default function ViewProfile() {
         <div style={{ marginTop: 22 }}>
           <h4 style={{ color: '#444', marginBottom: 10 }}>Recommendations</h4>
           {recommendations.length === 0 && <p style={{ color: '#999', fontSize: 14 }}>No recommendations yet.</p>}
-          {recommendations.map(r => <div key={r.id} style={{ padding: 12, background: '#f8f9ff', borderRadius: 8, marginBottom: 8 }}><p style={{ margin: 0, lineHeight: 1.5 }}>{r.text}</p><small style={{ color: '#777' }}>Recommended by {r.recommender_name}</small></div>)}
+          {recommendations.map(r => <div key={r.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: 12, background: '#f8f9ff', borderRadius: 8, marginBottom: 8 }}><Avatar name={r.recommender_name} url={photoUrl(r.recommender_picture)} size={34} /><div><p style={{ margin: 0, lineHeight: 1.5 }}>{r.text}</p><small style={{ color: '#777' }}>Recommended by {r.recommender_name}</small></div></div>)}
           <form onSubmit={submitRecommendation} style={{ marginTop: 12 }}>
             <textarea rows={3} minLength={10} maxLength={1000} placeholder="Write a recommendation (10-1000 characters)" value={recommendation} onChange={e => setRecommendation(e.target.value)} required />
             <button type="submit">Recommend {p.full_name}</button>

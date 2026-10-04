@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import api, { uploadPhoto, photoUrl } from '../api/client.js';
 import Avatar from '../components/Avatar.jsx';
+import VolunteerPickerModal from '../components/VolunteerPickerModal.jsx';
 
 const SKILL_OPTIONS = [
   'Announcing', 'Graphic Design', 'Video Editing', 'Photography',
@@ -22,8 +23,8 @@ export default function Profile({ onUpdate }) {
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
-  const [volunteers, setVolunteers] = useState([]);
-  const [recommendationTarget, setRecommendationTarget] = useState('');
+  const [recommendationTarget, setRecommendationTarget] = useState(null);
+  const [showRecommendationPicker, setShowRecommendationPicker] = useState(false);
   const [recommendationText, setRecommendationText] = useState('');
   const [recommendationMessage, setRecommendationMessage] = useState('');
   const fileRef = useRef();
@@ -42,7 +43,6 @@ export default function Profile({ onUpdate }) {
       }));
       api.get(`/users/${u.id}/stats`).then(r => setStats(r.data));
       setRecommendations(u.recommendations || []);
-      api.get('/users').then(r => setVolunteers(r.data.filter(v => v.id !== u.id)));
     });
   }, []);
 
@@ -55,8 +55,8 @@ export default function Profile({ onUpdate }) {
     if (!recommendationTarget) return setRecommendationMessage('Select a volunteer first');
     if (recommendationText.trim().length < 10) return setRecommendationMessage('Write at least 10 characters');
     try {
-      const { data } = await api.post(`/users/${recommendationTarget}/recommendations`, { text: recommendationText });
-      setRecommendationText(''); setRecommendationTarget(''); setRecommendationMessage(`Recommendation added for ${data.recommended_user_id}.`);
+      const { data } = await api.post(`/users/${recommendationTarget.id}/recommendations`, { text: recommendationText });
+      setRecommendationText(''); setRecommendationTarget(null); setRecommendationMessage(`Recommendation added for ${data.recommended_user_id}.`);
     } catch (e) { setRecommendationMessage(e.response?.data?.error || 'Could not add recommendation'); }
   };
 
@@ -103,6 +103,7 @@ export default function Profile({ onUpdate }) {
   return (
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
       <h2 style={{ marginBottom: 16 }}>My Profile</h2>
+      {showRecommendationPicker && <VolunteerPickerModal title="Recommend a Volunteer" actionLabel="Select" onPick={(volunteer) => { setRecommendationTarget(volunteer); setShowRecommendationPicker(false); }} onClose={() => setShowRecommendationPicker(false)} />}
       {/* ── Photo ── */}
       <div className="card">
         <h3 style={{ marginBottom: 14 }}>Profile Photo</h3>
@@ -192,16 +193,15 @@ export default function Profile({ onUpdate }) {
         <div className="card">
           <h3>Recommendations</h3>
           {recommendations.length === 0 && <p style={{ color: '#999', marginTop: 8 }}>No recommendations yet.</p>}
-          {recommendations.map(r => <div key={r.id} style={{ padding: 12, background: '#f8f9ff', borderRadius: 8, marginTop: 10 }}><p style={{ margin: 0, lineHeight: 1.5 }}>{r.text}</p><small style={{ color: '#777' }}>Recommended by {r.recommender_name}</small></div>)}
+          {recommendations.map(r => <div key={r.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: 12, background: '#f8f9ff', borderRadius: 8, marginTop: 10 }}><Avatar name={r.recommender_name} url={photoUrl(r.recommender_picture)} size={34} /><div><p style={{ margin: 0, lineHeight: 1.5 }}>{r.text}</p><small style={{ color: '#777' }}>Recommended by {r.recommender_name}</small></div></div>)}
         </div>
         <div className="card">
           <h3>Recommend someone</h3>
           <div style={{ marginTop: 12 }}>
             <label>Volunteer</label>
-            <select value={recommendationTarget} onChange={e => setRecommendationTarget(e.target.value)} required>
-              <option value="">Select a volunteer</option>
-              {volunteers.map(v => <option key={v.id} value={v.id}>{v.full_name} ({v.email})</option>)}
-            </select>
+            <button type="button" className="secondary" onClick={() => setShowRecommendationPicker(true)} style={{ width: '100%', textAlign: 'left', marginBottom: 14 }}>
+              {recommendationTarget ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><Avatar name={recommendationTarget.full_name} url={photoUrl(recommendationTarget.profile_picture_url)} size={28} />{recommendationTarget.full_name} ({recommendationTarget.email})</span> : 'Select a volunteer'}
+            </button>
             <label>Recommendation</label>
             <textarea rows={3} minLength={10} maxLength={1000} placeholder="Write at least 10 characters" value={recommendationText} onChange={e => setRecommendationText(e.target.value)} required />
             <button type="button" onClick={recommendSomeone}>Submit recommendation</button>

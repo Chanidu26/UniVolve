@@ -83,7 +83,7 @@ exports.me = async (req, res) => {
   const { rows } = await pool.query(`
     SELECT ${PROFILE_COLS}, COALESCE((SELECT json_agg(json_build_object(
       'id', r.id, 'text', r.text, 'created_at', r.created_at,
-      'recommender_name', u.full_name, 'recommender_id', u.id
+      'recommender_name', u.full_name, 'recommender_id', u.id, 'recommender_picture', u.profile_picture_url
     ) ORDER BY r.created_at DESC) FROM recommendations r JOIN users u ON u.id=r.recommender_user_id
     WHERE r.recommended_user_id=users.id), '[]') AS recommendations
     FROM users WHERE id=$1`, [req.user.sub]);
@@ -94,7 +94,7 @@ exports.viewProfile = async (req, res) => {
   const { rows } = await pool.query(`
     SELECT ${PROFILE_COLS}, COALESCE((SELECT json_agg(json_build_object(
       'id', r.id, 'text', r.text, 'created_at', r.created_at,
-      'recommender_name', u.full_name, 'recommender_id', u.id
+      'recommender_name', u.full_name, 'recommender_id', u.id, 'recommender_picture', u.profile_picture_url
     ) ORDER BY r.created_at DESC) FROM recommendations r JOIN users u ON u.id=r.recommender_user_id
     WHERE r.recommended_user_id=users.id), '[]') AS recommendations
     FROM users WHERE id=$1`, [req.params.userId]);
