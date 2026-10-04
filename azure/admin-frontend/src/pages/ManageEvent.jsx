@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import api from '../api/client.js';
 import UserChip from '../components/UserChip.jsx';
 import VolunteerPickerModal from '../components/VolunteerPickerModal.jsx';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function ManageEvent() {
   const { id } = useParams();
@@ -10,10 +11,11 @@ export default function ManageEvent() {
   const [roles, setRoles] = useState([]);
   const [role, setRole] = useState({ role_name: '', description: '', total_slots: 5 });
   const [inviteRoleId, setInviteRoleId] = useState(null);
+  const [event, setEvent] = useState(null);
 
   const load = () => {
     api.get(`/events/${id}/applications`).then(r => setApps(r.data));
-    api.get('/events').then(r => setRoles(r.data.find(e => e.id === id)?.roles || []));
+    api.get('/events').then(r => { const current = r.data.find(e => e.id === id); setEvent(current); setRoles(current?.roles || []); });
   };
   useEffect(() => { load(); }, [id]);
 
@@ -37,6 +39,11 @@ export default function ManageEvent() {
     } catch (e) { alert(e.response?.data?.error || 'Invite failed'); }
   };
 
+  const endorse = async (volunteerId, skill) => {
+    try { await api.post(`/events/${id}/users/${volunteerId}/endorsements`, { skill }); }
+    catch (e) { alert(e.response?.data?.error || 'Endorsement failed'); }
+  };
+
   return (
     <>
       {inviteRoleId && (
@@ -49,6 +56,11 @@ export default function ManageEvent() {
       )}
 
       <h2 style={{ marginBottom: 16 }}>Manage Event</h2>
+
+      {event?.attendance_code && <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+        <QRCodeSVG value={`${window.location.origin}/attendance/${event.id}?code=${event.attendance_code}`} size={150} />
+        <div><h3>Attendance QR code</h3><p style={{ color: 'var(--ink-soft)', marginTop: 8 }}>Volunteers scan or enter this event code to check in and out.</p><code>{event.attendance_code}</code></div>
+      </div>}
 
       {roles.length > 0 && (
         <div className="card">
@@ -103,7 +115,9 @@ export default function ManageEvent() {
                   <UserChip id={a.volunteer_id} name={a.full_name} url={a.profile_picture_url} size={32} />
                   {a.skills?.length > 0 && (
                     <div style={{ marginTop: 4 }}>
-                      {a.skills.map(s => <span key={s} className="skill-tag">{s}</span>)}
+                      {a.skills.map(s => <button key={s} className="skill-tag" style={{ border: 0, cursor: 'pointer' }} onClick={() => endorse(a.volunteer_id, s)} title={`Endorse ${s}`}>
+                        {s} +
+                      </button>)}
                     </div>
                   )}
                 </td>

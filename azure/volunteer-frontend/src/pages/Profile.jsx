@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import api, { uploadPhoto, photoUrl } from '../api/client.js';
 import Avatar from '../components/Avatar.jsx';
+import VolunteerPickerModal from '../components/VolunteerPickerModal.jsx';
 
 const SKILL_OPTIONS = [
   'Announcing', 'Graphic Design', 'Video Editing', 'Photography',
@@ -20,6 +21,12 @@ export default function Profile({ onUpdate }) {
   const [msg, setMsg] = useState('');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [stats, setStats] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
+  const [recommendationTarget, setRecommendationTarget] = useState(null);
+  const [showRecommendationPicker, setShowRecommendationPicker] = useState(false);
+  const [recommendationText, setRecommendationText] = useState('');
+  const [recommendationMessage, setRecommendationMessage] = useState('');
   const fileRef = useRef();
 
   useEffect(() => {
@@ -34,8 +41,24 @@ export default function Profile({ onUpdate }) {
         const [platform, ...rest] = raw.split('::');
         return rest.length ? { platform, url: rest.join('::') } : { platform: 'Other', url: raw };
       }));
+      api.get(`/users/${u.id}/stats`).then(r => setStats(r.data));
+      setRecommendations(u.recommendations || []);
     });
   }, []);
+
+  const exportResume = () => {
+    const html = `<html><body style="font-family:Arial;padding:40px"><h1>${fullName}</h1><p>${bio}</p><h2>Verified volunteer history</h2><p>Completed events: ${stats?.completed_events || 0}</p><p>Volunteer hours: ${stats?.volunteer_hours || 0}</p><h2>Skills</h2><p>${skills.join(', ') || 'None listed'}</p><h2>Portfolio</h2><p>${links.map(link => `${link.platform}: ${link.url}`).join('<br>') || 'None listed'}</p></body></html>`;
+    const win = window.open('', '_blank'); win.document.write(html); win.document.close(); win.print();
+  };
+
+  const recommendSomeone = async () => {
+    if (!recommendationTarget) return setRecommendationMessage('Select a volunteer first');
+    if (recommendationText.trim().length < 10) return setRecommendationMessage('Write at least 10 characters');
+    try {
+      const { data } = await api.post(`/users/${recommendationTarget.id}/recommendations`, { text: recommendationText });
+      setRecommendationText(''); setRecommendationTarget(null); setRecommendationMessage(`Recommendation added for ${data.recommended_user_id}.`);
+    } catch (e) { setRecommendationMessage(e.response?.data?.error || 'Could not add recommendation'); }
+  };
 
   // --- Photo upload ---
   const handlePhotoChange = async (e) => {
@@ -80,7 +103,7 @@ export default function Profile({ onUpdate }) {
   return (
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
       <h2 style={{ marginBottom: 16 }}>My Profile</h2>
-
+      {showRecommendationPicker && <VolunteerPickerModal title="Recommend a Volunteer" actionLabel="Select" onPick={(volunteer) => { setRecommendationTarget(volunteer); setShowRecommendationPicker(false); }} onClose={() => setShowRecommendationPicker(false)} />}
       {/* ── Photo ── */}
       <div className="card">
         <h3 style={{ marginBottom: 14 }}>Profile Photo</h3>
@@ -161,6 +184,29 @@ export default function Profile({ onUpdate }) {
                 style={{ padding: '8px 12px', flexShrink: 0 }}>✕</button>
             </div>
           ))}
+        </div>
+
+        <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <div><h3>Verified volunteer history</h3><p style={{ color: '#666', marginTop: 6 }}>{stats?.completed_events || 0} completed events · {stats?.volunteer_hours || 0} hours · {stats?.endorsements?.length || 0} endorsements</p></div>
+          <button type="button" className="secondary" onClick={exportResume}>Export résumé</button>
+        </div>
+        <div className="card">
+          <h3>Recommendations</h3>
+          {recommendations.length === 0 && <p style={{ color: '#999', marginTop: 8 }}>No recommendations yet.</p>}
+          {recommendations.map(r => <div key={r.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: 12, background: '#f8f9ff', borderRadius: 8, marginTop: 10 }}><Avatar name={r.recommender_name} url={photoUrl(r.recommender_picture)} size={34} /><div><p style={{ margin: 0, lineHeight: 1.5 }}>{r.text}</p><small style={{ color: '#777' }}>Recommended by {r.recommender_name}</small></div></div>)}
+        </div>
+        <div className="card">
+          <h3>Recommend someone</h3>
+          <div style={{ marginTop: 12 }}>
+            <label>Volunteer</label>
+            <button type="button" className="secondary" onClick={() => setShowRecommendationPicker(true)} style={{ width: '100%', textAlign: 'left', marginBottom: 14 }}>
+              {recommendationTarget ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><Avatar name={recommendationTarget.full_name} url={photoUrl(recommendationTarget.profile_picture_url)} size={28} />{recommendationTarget.full_name} ({recommendationTarget.email})</span> : 'Select a volunteer'}
+            </button>
+            <label>Recommendation</label>
+            <textarea rows={3} minLength={10} maxLength={1000} placeholder="Write at least 10 characters" value={recommendationText} onChange={e => setRecommendationText(e.target.value)} required />
+            <button type="button" onClick={recommendSomeone}>Submit recommendation</button>
+          </div>
+          {recommendationMessage && <p style={{ marginTop: 8, color: '#666' }}>{recommendationMessage}</p>}
         </div>
 
         <button type="submit" disabled={saving} style={{ width: '100%', padding: 12, fontSize: 15 }}>

@@ -27,8 +27,13 @@ CREATE TABLE IF NOT EXISTS events (
     image_url VARCHAR(500),
     created_by UUID NOT NULL REFERENCES users(id),
     organizer_id UUID REFERENCES users(id),
+    attendance_code VARCHAR(32) UNIQUE NOT NULL DEFAULT replace(gen_random_uuid()::text, '-', ''),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE events ADD COLUMN IF NOT EXISTS attendance_code VARCHAR(32);
+UPDATE events SET attendance_code = replace(gen_random_uuid()::text, '-', '') WHERE attendance_code IS NULL;
+ALTER TABLE events ALTER COLUMN attendance_code SET DEFAULT replace(gen_random_uuid()::text, '-', '');
+CREATE UNIQUE INDEX IF NOT EXISTS idx_events_attendance_code ON events(attendance_code);
 CREATE INDEX IF NOT EXISTS idx_events_date ON events(event_date);
 CREATE INDEX IF NOT EXISTS idx_events_status ON events(status);
 
@@ -58,5 +63,48 @@ CREATE TABLE IF NOT EXISTS applications (
 );
 CREATE INDEX IF NOT EXISTS idx_apps_volunteer ON applications(volunteer_id);
 CREATE INDEX IF NOT EXISTS idx_apps_status ON applications(status);
+
+CREATE TABLE IF NOT EXISTS attendance (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    application_id UUID NOT NULL UNIQUE REFERENCES applications(id) ON DELETE CASCADE,
+    check_in_at TIMESTAMPTZ,
+    check_out_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    CHECK (check_out_at IS NULL OR check_in_at IS NOT NULL),
+    CHECK (check_out_at IS NULL OR check_out_at >= check_in_at)
+);
+CREATE INDEX IF NOT EXISTS idx_attendance_check_in ON attendance(check_in_at);
+
+CREATE TABLE IF NOT EXISTS event_feedback (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    volunteer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(event_id, volunteer_id)
+);
+
+CREATE TABLE IF NOT EXISTS skill_endorsements (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    volunteer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    organizer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    skill VARCHAR(100) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(volunteer_id, organizer_id, event_id, skill)
+);
+CREATE INDEX IF NOT EXISTS idx_endorsements_volunteer ON skill_endorsements(volunteer_id);
+
+CREATE TABLE IF NOT EXISTS recommendations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    recommended_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    recommender_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    text TEXT NOT NULL CHECK (length(trim(text)) BETWEEN 10 AND 1000),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(recommended_user_id, recommender_user_id),
+    CHECK (recommended_user_id <> recommender_user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_recommendations_user ON recommendations(recommended_user_id, created_at DESC);
 
 -- system_role is synchronized from the verified Entra app-role claim on login.

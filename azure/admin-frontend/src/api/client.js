@@ -1,8 +1,16 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 const api = axios.create({ baseURL: BASE });
+
+api.interceptors.response.use((response) => {
+  if (['post', 'put', 'delete', 'patch'].includes(response.config.method?.toLowerCase())) {
+    toast.success('Saved successfully');
+  }
+  return response;
+});
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('vms_token');

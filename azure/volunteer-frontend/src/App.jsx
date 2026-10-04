@@ -1,6 +1,7 @@
 import { Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
+import { Toaster } from 'react-hot-toast';
 import Events from './pages/Events.jsx';
 import MyApplications from './pages/MyApplications.jsx';
 import VolunteerRequests from './pages/VolunteerRequests.jsx';
@@ -8,6 +9,7 @@ import Profile from './pages/Profile.jsx';
 import ViewProfile from './pages/ViewProfile.jsx';
 import ManageEvent from './pages/ManageEvent.jsx';
 import api from './api/client.js';
+
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -50,6 +52,7 @@ export default function App() {
 
   return (
     <>
+      <Toaster position="top-right" toastOptions={{ duration: 2800 }} />
       <nav>
         <b>🎓 UniVolve</b>
         <Link to="/">Events</Link>
