@@ -102,30 +102,6 @@ export default function Profile({ onUpdate }) {
   return (
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
       <h2 style={{ marginBottom: 16 }}>My Profile</h2>
-      <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-        <div><h3>Verified volunteer history</h3><p style={{ color: '#666', marginTop: 6 }}>{stats?.completed_events || 0} completed events · {stats?.volunteer_hours || 0} hours · {stats?.endorsements?.length || 0} endorsements</p></div>
-        <button className="secondary" onClick={exportResume}>Export résumé</button>
-      </div>
-      <div className="card">
-        <h3>Recommendations</h3>
-        {recommendations.length === 0 && <p style={{ color: '#999', marginTop: 8 }}>No recommendations yet.</p>}
-        {recommendations.map(r => <div key={r.id} style={{ padding: 12, background: '#f8f9ff', borderRadius: 8, marginTop: 10 }}><p style={{ margin: 0, lineHeight: 1.5 }}>{r.text}</p><small style={{ color: '#777' }}>Recommended by {r.recommender_name}</small></div>)}
-      </div>
-      <div className="card">
-        <h3>Recommend someone</h3>
-        <form onSubmit={recommendSomeone} style={{ marginTop: 12 }}>
-          <label>Volunteer</label>
-          <select value={recommendationTarget} onChange={e => setRecommendationTarget(e.target.value)} required>
-            <option value="">Select a volunteer</option>
-            {volunteers.map(v => <option key={v.id} value={v.id}>{v.full_name} ({v.email})</option>)}
-          </select>
-          <label>Recommendation</label>
-          <textarea rows={3} minLength={10} maxLength={1000} placeholder="Write at least 10 characters" value={recommendationText} onChange={e => setRecommendationText(e.target.value)} required />
-          <button type="submit">Submit recommendation</button>
-        </form>
-        {recommendationMessage && <p style={{ marginTop: 8, color: '#666' }}>{recommendationMessage}</p>}
-      </div>
-
       {/* ── Photo ── */}
       <div className="card">
         <h3 style={{ marginBottom: 14 }}>Profile Photo</h3>
@@ -206,6 +182,30 @@ export default function Profile({ onUpdate }) {
                 style={{ padding: '8px 12px', flexShrink: 0 }}>✕</button>
             </div>
           ))}
+        </div>
+
+        <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <div><h3>Verified volunteer history</h3><p style={{ color: '#666', marginTop: 6 }}>{stats?.completed_events || 0} completed events · {stats?.volunteer_hours || 0} hours · {stats?.endorsements?.length || 0} endorsements</p></div>
+          <button type="button" className="secondary" onClick={exportResume}>Export résumé</button>
+        </div>
+        <div className="card">
+          <h3>Recommendations</h3>
+          {recommendations.length === 0 && <p style={{ color: '#999', marginTop: 8 }}>No recommendations yet.</p>}
+          {recommendations.map(r => <div key={r.id} style={{ padding: 12, background: '#f8f9ff', borderRadius: 8, marginTop: 10 }}><p style={{ margin: 0, lineHeight: 1.5 }}>{r.text}</p><small style={{ color: '#777' }}>Recommended by {r.recommender_name}</small></div>)}
+        </div>
+        <div className="card">
+          <h3>Recommend someone</h3>
+          <form onSubmit={recommendSomeone} style={{ marginTop: 12 }}>
+            <label>Volunteer</label>
+            <select value={recommendationTarget} onChange={e => setRecommendationTarget(e.target.value)} required>
+              <option value="">Select a volunteer</option>
+              {volunteers.map(v => <option key={v.id} value={v.id}>{v.full_name} ({v.email})</option>)}
+            </select>
+            <label>Recommendation</label>
+            <textarea rows={3} minLength={10} maxLength={1000} placeholder="Write at least 10 characters" value={recommendationText} onChange={e => setRecommendationText(e.target.value)} required />
+            <button type="submit">Submit recommendation</button>
+          </form>
+          {recommendationMessage && <p style={{ marginTop: 8, color: '#666' }}>{recommendationMessage}</p>}
         </div>
 
         <button type="submit" disabled={saving} style={{ width: '100%', padding: 12, fontSize: 15 }}>
