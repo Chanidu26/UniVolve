@@ -22,6 +22,10 @@ export default function Profile({ onUpdate }) {
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
+  const [volunteers, setVolunteers] = useState([]);
+  const [recommendationTarget, setRecommendationTarget] = useState('');
+  const [recommendationText, setRecommendationText] = useState('');
+  const [recommendationMessage, setRecommendationMessage] = useState('');
   const fileRef = useRef();
 
   useEffect(() => {
@@ -38,12 +42,21 @@ export default function Profile({ onUpdate }) {
       }));
       api.get(`/users/${u.id}/stats`).then(r => setStats(r.data));
       api.get(`/users/${u.id}/recommendations`).then(r => setRecommendations(r.data));
+      api.get('/users').then(r => setVolunteers(r.data.filter(v => v.id !== u.id)));
     });
   }, []);
 
   const exportResume = () => {
     const html = `<html><body style="font-family:Arial;padding:40px"><h1>${fullName}</h1><p>${bio}</p><h2>Verified volunteer history</h2><p>Completed events: ${stats?.completed_events || 0}</p><p>Volunteer hours: ${stats?.volunteer_hours || 0}</p><h2>Skills</h2><p>${skills.join(', ') || 'None listed'}</p><h2>Portfolio</h2><p>${links.map(link => `${link.platform}: ${link.url}`).join('<br>') || 'None listed'}</p></body></html>`;
     const win = window.open('', '_blank'); win.document.write(html); win.document.close(); win.print();
+  };
+
+  const recommendSomeone = async (event) => {
+    event.preventDefault();
+    try {
+      const { data } = await api.post(`/users/${recommendationTarget}/recommendations`, { text: recommendationText });
+      setRecommendationText(''); setRecommendationTarget(''); setRecommendationMessage(`Recommendation added for ${data.recommended_user_id}.`);
+    } catch (e) { setRecommendationMessage(e.response?.data?.error || 'Could not add recommendation'); }
   };
 
   // --- Photo upload ---
@@ -97,6 +110,20 @@ export default function Profile({ onUpdate }) {
         <h3>Recommendations</h3>
         {recommendations.length === 0 && <p style={{ color: '#999', marginTop: 8 }}>No recommendations yet.</p>}
         {recommendations.map(r => <div key={r.id} style={{ padding: 12, background: '#f8f9ff', borderRadius: 8, marginTop: 10 }}><p style={{ margin: 0, lineHeight: 1.5 }}>{r.text}</p><small style={{ color: '#777' }}>Recommended by {r.recommender_name}</small></div>)}
+      </div>
+      <div className="card">
+        <h3>Recommend someone</h3>
+        <form onSubmit={recommendSomeone} style={{ marginTop: 12 }}>
+          <label>Volunteer</label>
+          <select value={recommendationTarget} onChange={e => setRecommendationTarget(e.target.value)} required>
+            <option value="">Select a volunteer</option>
+            {volunteers.map(v => <option key={v.id} value={v.id}>{v.full_name} ({v.email})</option>)}
+          </select>
+          <label>Recommendation</label>
+          <textarea rows={3} minLength={10} maxLength={1000} placeholder="Write at least 10 characters" value={recommendationText} onChange={e => setRecommendationText(e.target.value)} required />
+          <button type="submit">Submit recommendation</button>
+        </form>
+        {recommendationMessage && <p style={{ marginTop: 8, color: '#666' }}>{recommendationMessage}</p>}
       </div>
 
       {/* ── Photo ── */}
