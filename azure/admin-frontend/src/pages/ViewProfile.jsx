@@ -17,8 +17,7 @@ export default function ViewProfile() {
   const [recommendationMessage, setRecommendationMessage] = useState('');
 
   useEffect(() => {
-    api.get(`/users/${userId}`).then(r => setP(r.data)).catch(() => navigate('/'));
-    api.get(`/users/${userId}/recommendations`).then(r => setRecommendations(r.data));
+    api.get(`/users/${userId}`).then(r => { setP(r.data); setRecommendations(r.data.recommendations || []); }).catch(() => navigate('/'));
   }, [userId]);
 
   const submitRecommendation = async (event) => {

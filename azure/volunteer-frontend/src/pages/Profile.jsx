@@ -41,7 +41,7 @@ export default function Profile({ onUpdate }) {
         return rest.length ? { platform, url: rest.join('::') } : { platform: 'Other', url: raw };
       }));
       api.get(`/users/${u.id}/stats`).then(r => setStats(r.data));
-      api.get(`/users/${u.id}/recommendations`).then(r => setRecommendations(r.data));
+      setRecommendations(u.recommendations || []);
       api.get('/users').then(r => setVolunteers(r.data.filter(v => v.id !== u.id)));
     });
   }, []);
