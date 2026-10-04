@@ -4,6 +4,7 @@ const auth = require('../controllers/authController');
 const events = require('../controllers/eventController');
 const roles = require('../controllers/roleController');
 const apps = require('../controllers/applicationController');
+const features = require('../controllers/featureController');
 
 
 // Auth
@@ -15,6 +16,16 @@ router.post('/auth/upload-photo', authenticate, auth.uploadPhoto);
 // Users
 router.get('/users', authenticate, auth.listVolunteers);
 router.get('/users/:userId', authenticate, auth.viewProfile);
+router.get('/users/:userId/stats', authenticate, features.profileStats);
+router.get('/users/:userId/recommendations', authenticate, features.listRecommendations);
+router.post('/users/:userId/recommendations', authenticate, features.createRecommendation);
+
+// Attendance, feedback, and volunteer profile enhancements
+router.post('/attendance', authenticate, features.checkAttendance);
+router.get('/attendance/mine', authenticate, features.mineAttendance);
+router.post('/events/:eventId/feedback', authenticate, features.feedback);
+router.post('/events/:eventId/users/:userId/endorsements', authenticate, events.requireEventOrganizer, features.endorseSkill);
+router.get('/admin/stats', authenticate, requireRole('SUPER_ADMIN'), features.adminStats);
 
 // Events
 router.get('/events', authenticate, events.list);

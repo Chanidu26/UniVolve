@@ -1,3 +1,6 @@
-# azure/*
+azure/admin-frontend/dist/*
+azure/volunteer-frontend/dist/*
+azure/admin-frontend/node_modules/*
+azure/volunteer-frontend/node_modules/*
 # local/*
 CLAUDE.md

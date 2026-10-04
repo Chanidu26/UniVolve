@@ -12,10 +12,22 @@ export default function ViewProfile() {
   const { userId } = useParams();
   const navigate = useNavigate();
   const [p, setP] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
+  const [recommendation, setRecommendation] = useState('');
+  const [recommendationMessage, setRecommendationMessage] = useState('');
 
   useEffect(() => {
     api.get(`/users/${userId}`).then(r => setP(r.data)).catch(() => navigate('/'));
+    api.get(`/users/${userId}/recommendations`).then(r => setRecommendations(r.data));
   }, [userId]);
+
+  const submitRecommendation = async (event) => {
+    event.preventDefault();
+    try {
+      const { data } = await api.post(`/users/${userId}/recommendations`, { text: recommendation });
+      setRecommendations([data, ...recommendations]); setRecommendation(''); setRecommendationMessage('Recommendation added.');
+    } catch (e) { setRecommendationMessage(e.response?.data?.error || 'Could not add recommendation'); }
+  };
 
   if (!p) return <div style={{ padding: 32 }}>Loading...</div>;
 
@@ -85,6 +97,17 @@ export default function ViewProfile() {
             </div>
           </div>
         )}
+
+        <div style={{ marginTop: 22 }}>
+          <h4 style={{ color: '#444', marginBottom: 10 }}>Recommendations</h4>
+          {recommendations.length === 0 && <p style={{ color: '#999', fontSize: 14 }}>No recommendations yet.</p>}
+          {recommendations.map(r => <div key={r.id} style={{ padding: 12, background: '#f8f9ff', borderRadius: 8, marginBottom: 8 }}><p style={{ margin: 0, lineHeight: 1.5 }}>{r.text}</p><small style={{ color: '#777' }}>Recommended by {r.recommender_name}</small></div>)}
+          <form onSubmit={submitRecommendation} style={{ marginTop: 12 }}>
+            <textarea rows={3} minLength={10} maxLength={1000} placeholder="Write a recommendation (10-1000 characters)" value={recommendation} onChange={e => setRecommendation(e.target.value)} required />
+            <button type="submit">Recommend {p.full_name}</button>
+          </form>
+          {recommendationMessage && <p style={{ marginTop: 8, color: '#666' }}>{recommendationMessage}</p>}
+        </div>
       </div>
     </div>
   );

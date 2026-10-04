@@ -20,23 +20,10 @@ async function initializeSchema() {
     const schemaSecret = await client.getSecret('db-schema');
     const schema = schemaSecret.value;
     
-    // Check if ANY expected table is missing
-    const expectedTables = ['users', 'events', 'event_roles', 'applications'];
-    const { rows } = await pool.query(
-      `SELECT array_agg(table_name) as tables FROM information_schema.tables 
-       WHERE table_schema='public' AND table_name = ANY($1)`,
-      [expectedTables]
-    );
-    
-    const existingTables = rows[0].tables || [];
-    
-    if (existingTables.length !== expectedTables.length) {
-      console.log('📊 Applying database schema...');
-      await pool.query(schema);
-      console.log('✅ Schema applied successfully');
-    } else {
-      console.log('✅ Schema already exists, skipping');
-    }
+    // The schema is idempotent and also contains additive migrations for existing databases.
+    console.log('📊 Applying database schema and migrations...');
+    await pool.query(schema);
+    console.log('✅ Schema and migrations applied successfully');
   } catch (e) {
     console.error('❌ Schema initialization failed:', e.message);
     throw e;

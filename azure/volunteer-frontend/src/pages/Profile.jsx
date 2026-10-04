@@ -20,6 +20,7 @@ export default function Profile({ onUpdate }) {
   const [msg, setMsg] = useState('');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [stats, setStats] = useState(null);
   const fileRef = useRef();
 
   useEffect(() => {
@@ -34,8 +35,14 @@ export default function Profile({ onUpdate }) {
         const [platform, ...rest] = raw.split('::');
         return rest.length ? { platform, url: rest.join('::') } : { platform: 'Other', url: raw };
       }));
+      api.get(`/users/${u.id}/stats`).then(r => setStats(r.data));
     });
   }, []);
+
+  const exportResume = () => {
+    const html = `<html><body style="font-family:Arial;padding:40px"><h1>${fullName}</h1><p>${bio}</p><h2>Verified volunteer history</h2><p>Completed events: ${stats?.completed_events || 0}</p><p>Volunteer hours: ${stats?.volunteer_hours || 0}</p><h2>Skills</h2><p>${skills.join(', ') || 'None listed'}</p><h2>Portfolio</h2><p>${links.map(link => `${link.platform}: ${link.url}`).join('<br>') || 'None listed'}</p></body></html>`;
+    const win = window.open('', '_blank'); win.document.write(html); win.document.close(); win.print();
+  };
 
   // --- Photo upload ---
   const handlePhotoChange = async (e) => {
@@ -80,6 +87,10 @@ export default function Profile({ onUpdate }) {
   return (
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
       <h2 style={{ marginBottom: 16 }}>My Profile</h2>
+      <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+        <div><h3>Verified volunteer history</h3><p style={{ color: '#666', marginTop: 6 }}>{stats?.completed_events || 0} completed events · {stats?.volunteer_hours || 0} hours · {stats?.endorsements?.length || 0} endorsements</p></div>
+        <button className="secondary" onClick={exportResume}>Export résumé</button>
+      </div>
 
       {/* ── Photo ── */}
       <div className="card">

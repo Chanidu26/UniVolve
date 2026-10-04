@@ -8,11 +8,13 @@ const empty = { title: '', description: '', event_date: '', location: '', status
 
 export default function AdminEvents() {
   const [events, setEvents] = useState([]);
+  const [filters, setFilters] = useState({ q: '', location: '', status: '' });
   const [form, setForm] = useState(empty);
   const [photo, setPhoto] = useState(null);
   const [pickerEventId, setPickerEventId] = useState(null); // which event the modal is for
-  const load = () => api.get('/events').then(r => setEvents(r.data));
+  const load = () => api.get('/events', { params: filters }).then(r => setEvents(r.data));
   useEffect(() => { load(); }, []);
+  useEffect(() => { const timer = setTimeout(load, 250); return () => clearTimeout(timer); }, [filters]);
   const set = k => e => setForm({ ...form, [k]: e.target.value });
 
   const create = async e => {
@@ -41,6 +43,17 @@ export default function AdminEvents() {
 
       <h2 style={{ marginBottom: 16 }}>Admin — Manage Events</h2>
 
+      <div className="card" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <input style={{ flex: '2 1 220px', margin: 0 }} placeholder="Search title or description"
+          value={filters.q} onChange={e => setFilters({ ...filters, q: e.target.value })} />
+        <input style={{ flex: '1 1 160px', margin: 0 }} placeholder="Filter location"
+          value={filters.location} onChange={e => setFilters({ ...filters, location: e.target.value })} />
+        <select style={{ flex: '1 1 140px', margin: 0 }} value={filters.status}
+          onChange={e => setFilters({ ...filters, status: e.target.value })}>
+          <option value="">All statuses</option><option value="DRAFT">Draft</option><option value="PUBLISHED">Published</option><option value="CLOSED">Closed</option>
+        </select>
+      </div>
+
       <div className="card">
         <h3 style={{ marginBottom: 12 }}>Create Event</h3>
         <form onSubmit={create}>
@@ -58,6 +71,7 @@ export default function AdminEvents() {
         </form>
       </div>
 
+      {events.length === 0 && <div className="card">No events match your filters.</div>}
       {events.map(e => (
         <div key={e.id} className="card">
           <div style={{ display: 'flex', gap: 20 }}>
