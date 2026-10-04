@@ -53,14 +53,16 @@ export default function App() {
       <nav>
         <b>🎓 UniVolve — Admin</b>
         <Link to="/dashboard">Dashboard</Link>
+        <Link to="/events">Manage Events</Link>
         <span style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 500 }}>{user?.full_name}</span>
         <span className="pill">{user?.system_role}</span>
         <button className="secondary" onClick={logout}>Logout</button>
       </nav>
       <div className="container">
         <Routes>
+          <Route path="/" element={<AdminDashboard />} />
           <Route path="/dashboard" element={<AdminDashboard />} />
-          <Route path="/" element={<AdminEvents />} />
+          <Route path="/events" element={<AdminEvents />} />
           <Route path="/manage/:id" element={<ManageEvent />} />
           <Route path="/profile/:userId" element={<ViewProfile />} />
           <Route path="*" element={<Navigate to="/" />} />
