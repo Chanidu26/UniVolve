@@ -4,6 +4,7 @@ const { SecretClient } = require('@azure/keyvault-secrets');
 
 let pool;
 
+
 async function getDbPassword() {
   if (process.env.DB_PASSWORD) return process.env.DB_PASSWORD;
   const credential = new DefaultAzureCredential();
