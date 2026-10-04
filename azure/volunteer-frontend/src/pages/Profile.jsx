@@ -51,8 +51,9 @@ export default function Profile({ onUpdate }) {
     const win = window.open('', '_blank'); win.document.write(html); win.document.close(); win.print();
   };
 
-  const recommendSomeone = async (event) => {
-    event.preventDefault();
+  const recommendSomeone = async () => {
+    if (!recommendationTarget) return setRecommendationMessage('Select a volunteer first');
+    if (recommendationText.trim().length < 10) return setRecommendationMessage('Write at least 10 characters');
     try {
       const { data } = await api.post(`/users/${recommendationTarget}/recommendations`, { text: recommendationText });
       setRecommendationText(''); setRecommendationTarget(''); setRecommendationMessage(`Recommendation added for ${data.recommended_user_id}.`);
@@ -195,7 +196,7 @@ export default function Profile({ onUpdate }) {
         </div>
         <div className="card">
           <h3>Recommend someone</h3>
-          <form onSubmit={recommendSomeone} style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 12 }}>
             <label>Volunteer</label>
             <select value={recommendationTarget} onChange={e => setRecommendationTarget(e.target.value)} required>
               <option value="">Select a volunteer</option>
@@ -203,8 +204,8 @@ export default function Profile({ onUpdate }) {
             </select>
             <label>Recommendation</label>
             <textarea rows={3} minLength={10} maxLength={1000} placeholder="Write at least 10 characters" value={recommendationText} onChange={e => setRecommendationText(e.target.value)} required />
-            <button type="submit">Submit recommendation</button>
-          </form>
+            <button type="button" onClick={recommendSomeone}>Submit recommendation</button>
+          </div>
           {recommendationMessage && <p style={{ marginTop: 8, color: '#666' }}>{recommendationMessage}</p>}
         </div>
 
