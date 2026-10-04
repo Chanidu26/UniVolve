@@ -8,6 +8,7 @@ import AdminDashboard from './pages/AdminDashboard.jsx';
 import ViewProfile from './pages/ViewProfile.jsx';
 import api from './api/client.js';
 
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('vms_token'));
