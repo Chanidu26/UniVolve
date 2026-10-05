@@ -1,7 +1,7 @@
 name: Deploy Backend to Azure Container Apps
 on:
   push:
-    branches: [dev-chanidu]
+    branches: [testing]
     paths: ["azure/backend/**"]
   workflow_dispatch: {}
 jobs:

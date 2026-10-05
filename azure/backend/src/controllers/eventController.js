@@ -27,6 +27,14 @@ exports.uploadPhoto = (req, res) => {
 
 exports.list = async (req, res) => {
   const admin = req.user.system_role === 'SUPER_ADMIN';
+  const { q, location, status, date } = req.query;
+  const filters = [];
+  const params = [];
+  if (!admin) filters.push("e.status = 'PUBLISHED'");
+  if (q) { params.push(`%${q}%`); filters.push(`(e.title ILIKE $${params.length} OR e.description ILIKE $${params.length})`); }
+  if (location) { params.push(`%${location}%`); filters.push(`e.location ILIKE $${params.length}`); }
+  if (status && admin) { params.push(status); filters.push(`e.status = $${params.length}`); }
+  if (date) { params.push(date); filters.push(`e.event_date::date = $${params.length}::date`); }
   const { rows } = await pool.query(`
     SELECT e.*, u.full_name AS organizer_name, u.profile_picture_url AS organizer_picture,
       COALESCE(json_agg(json_build_object(
@@ -36,9 +44,9 @@ exports.list = async (req, res) => {
     FROM events e
     LEFT JOIN users u ON u.id = e.organizer_id
     LEFT JOIN event_roles r ON r.event_id = e.id
-    ${admin ? '' : "WHERE e.status = 'PUBLISHED'"}
+    ${filters.length ? `WHERE ${filters.join(' AND ')}` : ''}
     GROUP BY e.id, u.full_name, u.profile_picture_url
-    ORDER BY e.event_date ASC`);
+    ORDER BY e.event_date ASC`, params);
   res.json(rows);
 };
 
