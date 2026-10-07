@@ -1,28 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api, { uploadEventPhoto, photoUrl } from '../api/client.js';
+import api, { photoUrl } from '../api/client.js';
 import UserChip from '../components/UserChip.jsx';
 import VolunteerPickerModal from '../components/VolunteerPickerModal.jsx';
-
-const empty = { title: '', description: '', event_date: '', location: '', status: 'DRAFT' };
 
 export default function AdminEvents() {
   const [events, setEvents] = useState([]);
   const [filters, setFilters] = useState({ q: '', location: '', status: '' });
-  const [form, setForm] = useState(empty);
-  const [photo, setPhoto] = useState(null);
   const [pickerEventId, setPickerEventId] = useState(null); // which event the modal is for
   const load = () => api.get('/events', { params: filters }).then(r => setEvents(r.data));
   useEffect(() => { load(); }, []);
   useEffect(() => { const timer = setTimeout(load, 250); return () => clearTimeout(timer); }, [filters]);
-  const set = k => e => setForm({ ...form, [k]: e.target.value });
-
-  const create = async e => {
-    e.preventDefault();
-    const { data: created } = await api.post('/events', form);
-    if (photo) await uploadEventPhoto(created.id, photo);
-    setForm(empty); setPhoto(null); load();
-  };
   const remove = async id => { if (confirm('Delete this event?')) { await api.delete(`/events/${id}`); load(); } };
   const setStatus = async (id, status) => { await api.put(`/events/${id}`, { status }); load(); };
 
@@ -52,23 +40,6 @@ export default function AdminEvents() {
           onChange={e => setFilters({ ...filters, status: e.target.value })}>
           <option value="">All statuses</option><option value="DRAFT">Draft</option><option value="PUBLISHED">Published</option><option value="CLOSED">Closed</option>
         </select>
-      </div>
-
-      <div className="card">
-        <h3 style={{ marginBottom: 12 }}>Create Event</h3>
-        <form onSubmit={create}>
-          <label>Title</label>
-          <input placeholder="Event title" value={form.title} onChange={set('title')} required />
-          <label>Description</label>
-          <textarea placeholder="Description" value={form.description} onChange={set('description')} />
-          <label>Date & Time</label>
-          <input type="datetime-local" value={form.event_date} onChange={set('event_date')} required />
-          <label>Location</label>
-          <input placeholder="Location" value={form.location} onChange={set('location')} />
-          <label>Event Photo</label>
-          <input type="file" accept="image/*" onChange={e => setPhoto(e.target.files[0])} />
-          <button type="submit">Create Event</button>
-        </form>
       </div>
 
       {events.length === 0 && <div className="card">No events match your filters.</div>}
