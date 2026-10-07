@@ -6,6 +6,7 @@ import AdminEvents from './pages/AdminEvents.jsx';
 import ManageEvent from './pages/ManageEvent.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import ViewProfile from './pages/ViewProfile.jsx';
+import VolunteerDirectory from './pages/VolunteerDirectory.jsx';
 import api from './api/client.js';
 
 
@@ -54,6 +55,7 @@ export default function App() {
         <b>🎓 UniVolve — Admin</b>
         <Link to="/dashboard">Dashboard</Link>
         <Link to="/events">Manage Events</Link>
+        <Link to="/volunteers">Find Volunteers</Link>
         <span style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 500 }}>{user?.full_name}</span>
         <span className="pill">{user?.system_role}</span>
         <button className="secondary" onClick={logout}>Logout</button>
@@ -63,6 +65,7 @@ export default function App() {
           <Route path="/" element={<AdminDashboard />} />
           <Route path="/dashboard" element={<AdminDashboard />} />
           <Route path="/events" element={<AdminEvents />} />
+          <Route path="/volunteers" element={<VolunteerDirectory />} />
           <Route path="/manage/:id" element={<ManageEvent />} />
           <Route path="/profile/:userId" element={<ViewProfile />} />
           <Route path="*" element={<Navigate to="/" />} />
