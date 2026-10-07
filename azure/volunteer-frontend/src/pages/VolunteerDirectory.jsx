@@ -31,10 +31,9 @@ export default function VolunteerDirectory() {
       <div className="volunteer-list">
         {filtered.map(volunteer => <button key={volunteer.id} className="volunteer-item" onClick={() => navigate(`/profile/${volunteer.id}`)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', color: 'var(--ink)', background: '#fff', border: '1.5px solid var(--line)' }}>
           <Avatar name={volunteer.full_name} url={volunteer.profile_picture_url} size={52} />
-          <span className="volunteer-info">
+          <span className="volunteer-info" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <span className="name">{volunteer.full_name}</span>
-            <span className="email">{volunteer.email}</span>
-            {volunteer.skills?.length > 0 && <span className="skills">🏷 {volunteer.skills.join(', ')}</span>}
+            {volunteer.skills?.length > 0 && <span className="skills" style={{ marginTop: 5 }}>🏷 {volunteer.skills.join(', ')}</span>}
           </span>
           <span style={{ color: 'var(--brand)', fontWeight: 700 }}>View profile →</span>
         </button>)}
