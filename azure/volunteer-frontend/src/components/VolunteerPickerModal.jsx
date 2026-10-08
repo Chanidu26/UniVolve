@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import Avatar from './Avatar.jsx';
 import api from '../api/client.js';
 
-export default function VolunteerPickerModal({ onPick, onClose, title = 'Assign Organizer', actionLabel = 'Assign' }) {
+export default function VolunteerPickerModal({ onPick, onClose, title = 'Assign Organizer', actionLabel = 'Assign', excludeUserId }) {
   const [volunteers, setVolunteers] = useState([]);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState(null);
 
   useEffect(() => { api.get('/users').then(r => setVolunteers(r.data)); }, []);
 
-  const filtered = volunteers.filter(v =>
+  const filtered = volunteers.filter(v => v.id !== excludeUserId &&
     v.full_name.toLowerCase().includes(search.toLowerCase()) ||
     v.email.toLowerCase().includes(search.toLowerCase())
   );
