@@ -8,8 +8,9 @@ import VolunteerRequests from './pages/VolunteerRequests.jsx';
 import Profile from './pages/Profile.jsx';
 import ViewProfile from './pages/ViewProfile.jsx';
 import ManageEvent from './pages/ManageEvent.jsx';
+import VolunteerDirectory from './pages/VolunteerDirectory.jsx';
+import RecommendSomeone from './pages/RecommendSomeone.jsx';
 import api from './api/client.js';
-
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -58,6 +59,8 @@ export default function App() {
         <Link to="/">Events</Link>
         <Link to="/requests">Volunteer Requests</Link>
         <Link to="/my-applications">My Applications</Link>
+        <Link to="/volunteers">Find Volunteers</Link>
+        <Link to="/recommend">Recommend</Link>
         <Link to="/profile">My Profile</Link>
         <span style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 500 }}>{user?.full_name}</span>
         <span className="pill">{user?.system_role}</span>
@@ -68,6 +71,8 @@ export default function App() {
           <Route path="/" element={<Events user={user} />} />
           <Route path="/requests" element={<VolunteerRequests />} />
           <Route path="/my-applications" element={<MyApplications />} />
+          <Route path="/volunteers" element={<VolunteerDirectory />} />
+          <Route path="/recommend" element={<RecommendSomeone />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:userId" element={<ViewProfile />} />
           <Route path="/manage/:id" element={<ManageEvent />} />
