@@ -6,7 +6,6 @@ const jwt = require('jsonwebtoken');
 // then mint our own long-lived JWT for subsequent requests, same approach as the local/ variant.
 const JWT_SECRET = process.env.JWT_SECRET;
 
-
 exports.sign = (user) =>
   jwt.sign({ sub: user.id, email: user.email, system_role: user.system_role }, JWT_SECRET, { expiresIn: '7d' });
 
