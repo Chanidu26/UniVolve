@@ -37,6 +37,15 @@ exports.invite = async (req, res) => {
   const { volunteer_id } = req.body;
   if (!volunteer_id) return res.status(400).json({ error: 'volunteer_id required' });
   try {
+    const { rows: roleRows } = await pool.query(
+      `SELECT e.organizer_id
+       FROM event_roles r
+       JOIN events e ON e.id = r.event_id
+       WHERE r.id=$1`, [req.params.roleId]);
+    if (!roleRows[0]) return res.status(404).json({ error: 'Role not found' });
+    if (roleRows[0].organizer_id === volunteer_id || req.user.sub === volunteer_id) {
+      return res.status(403).json({ error: 'You cannot invite yourself to an event role' });
+    }
     const { rows } = await pool.query(
       `INSERT INTO applications (event_role_id, volunteer_id, status, origin)
        VALUES ($1,$2,'INVITED','INVITE')
