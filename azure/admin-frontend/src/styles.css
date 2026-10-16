@@ -14,7 +14,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 nav { background: #fff; color: var(--ink); padding: 14px 28px; display: flex; gap: 20px; align-items: center;
       box-shadow: 0 1px 3px rgba(16,32,64,.08); position: sticky; top: 0; z-index: 10; }
 nav b { font-size: 17px; letter-spacing: -.01em; }
-nav a { color: var(--ink-soft); text-decoration: none; font-size: 14px; font-weight: 500; }
+nav a { white-space: nowrap; color: var(--ink-soft); text-decoration: none; font-size: 14px; font-weight: 500; }
 nav a:hover { color: var(--brand); }
 .nav-user { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 .nav-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid var(--brand-light); cursor: pointer; }
@@ -105,3 +105,66 @@ td { padding: 12px 8px; border-bottom: 1px solid var(--line); vertical-align: mi
 
 /* ── SEARCH ── */
 .search-box { padding: 11px 14px; border: 1.5px solid var(--line); border-radius: 10px; width: 100%; margin-bottom: 12px; font-size: 14px; }
+
+/* ── RESPONSIVE ── */
+body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+img { max-width: 100%; }
+
+@media (max-width: 900px) {
+  nav { flex-wrap: wrap; gap: 8px 16px; padding: 10px 16px; }
+  nav b { flex: 1 0 100%; }
+  .nav-user, nav > span[style*="margin-left"] { margin-left: 0 !important; }
+}
+
+@media (max-width: 640px) {
+  .container { margin: 16px auto; padding: 0 12px; }
+  .card { padding: 16px; border-radius: 12px; }
+  nav { padding: 10px 12px; gap: 6px 14px; }
+  nav a { font-size: 13px; padding: 4px 0; }
+  nav button { padding: 8px 14px; }
+
+  /* landing */
+  .hero { padding: 32px 16px; }
+  .hero h1 { font-size: 28px; }
+  .hero p { font-size: 14.5px; }
+  .hero .hero-actions { flex-wrap: wrap; }
+
+  /* 16px inputs stop iOS Safari zooming on focus */
+  input, select, textarea, .search-box { font-size: 16px; }
+
+  /* wide flex rows wrap instead of overflowing */
+  [style*="display: flex"] { flex-wrap: wrap; }
+
+  /* event cards: image on top, full width */
+  .event-row { flex-direction: column; }
+  .event-img { width: 100% !important; height: 180px !important; }
+
+  /* tables: each row becomes a wrapped line so no column is hidden off-screen */
+  table, tbody { display: block; width: 100%; }
+  thead { display: none; }
+  tbody tr { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  td { display: block; padding: 0; border: 0; }
+
+  /* profile */
+  .profile-header { flex-direction: column; align-items: flex-start; }
+  .profile-stats { gap: 16px; flex-wrap: wrap; }
+
+  /* modal becomes near full-width */
+  .modal { width: calc(100vw - 24px); max-height: 88vh; }
+  .modal-header, .modal-body, .modal-footer { padding-left: 16px; padding-right: 16px; }
+  .volunteer-item { padding: 10px; }
+}
+
+/* ── MOBILE NAV (hamburger) ── */
+.nav-toggle { display: none; }
+@media (max-width: 1100px) {
+  nav { align-items: center; }
+  nav b { flex: 1 1 auto; }
+  .nav-toggle { display: inline-flex; align-items: center; justify-content: center; margin-left: auto; padding: 6px 12px; font-size: 20px; line-height: 1; background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+  nav > :not(b):not(.nav-toggle) { display: none; }
+  nav.open > a, nav.open > span, nav.open > button.secondary { display: block; flex: 1 0 100%; }
+  nav.open > a { padding: 10px 4px; border-top: 1px solid var(--line); font-size: 15px; }
+  nav.open > span { margin-left: 0 !important; padding: 8px 4px 0; }
+  nav.open > span.pill { flex: 0 0 auto; align-self: flex-start; margin-left: 4px !important; }
+  nav.open > button.secondary { margin-top: 4px; }
+}

@@ -45,9 +45,9 @@ export default function AdminEvents() {
       {events.length === 0 && <div className="card">No events match your filters.</div>}
       {events.map(e => (
         <div key={e.id} className="card">
-          <div style={{ display: 'flex', gap: 20 }}>
+          <div className="event-row" style={{ display: 'flex', gap: 20 }}>
             {e.image_url && (
-              <img src={photoUrl(e.image_url)} alt={e.title}
+              <img className="event-img" src={photoUrl(e.image_url)} alt={e.title}
                 style={{ width: 200, height: 150, objectFit: 'cover', borderRadius: 12, flex: 'none' }} />
             )}
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
