@@ -8,8 +8,15 @@ exports.apply = async (req, res) => {
   try {
     await client.query('BEGIN');
     const { rows: cap } = await client.query(
-      `SELECT total_slots, filled_slots FROM event_roles WHERE id=$1 FOR UPDATE`, [event_role_id]);
+      `SELECT r.total_slots, r.filled_slots, e.organizer_id
+       FROM event_roles r
+       JOIN events e ON e.id = r.event_id
+       WHERE r.id=$1 FOR UPDATE`, [event_role_id]);
     if (!cap[0]) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Role not found' }); }
+    if (cap[0].organizer_id === req.user.sub) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: 'Event organizers cannot apply to their own event roles' });
+    }
     if (cap[0].filled_slots >= cap[0].total_slots) {
       await client.query('ROLLBACK'); return res.status(409).json({ error: 'Role is full' });
     }
