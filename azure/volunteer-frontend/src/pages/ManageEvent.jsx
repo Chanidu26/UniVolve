@@ -10,12 +10,16 @@ export default function ManageEvent() {
   const [roles, setRoles] = useState([]);
   const [role, setRole] = useState({ role_name: '', description: '', total_slots: 5 });
   const [inviteRoleId, setInviteRoleId] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const load = () => {
     api.get(`/events/${id}/applications`).then(r => setApps(r.data));
     api.get('/events').then(r => setRoles(r.data.find(e => e.id === id)?.roles || []));
   };
-  useEffect(() => { load(); }, [id]);
+  useEffect(() => {
+    api.get('/auth/me').then(r => setCurrentUser(r.data));
+    load();
+  }, [id]);
 
   const addRole = async e => {
     e.preventDefault();
@@ -43,6 +47,7 @@ export default function ManageEvent() {
         <VolunteerPickerModal
           title="Invite Volunteer"
           actionLabel="Invite"
+          excludeUserId={currentUser?.id}
           onPick={invite}
           onClose={() => setInviteRoleId(null)}
         />

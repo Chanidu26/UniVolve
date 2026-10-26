@@ -16,6 +16,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('vms_token'));
   const [authError, setAuthError] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   
@@ -54,8 +55,9 @@ export default function App() {
   return (
     <>
       <Toaster position="top-right" toastOptions={{ duration: 2800 }} />
-      <nav>
+      <nav className={menuOpen ? 'open' : ''} onClick={() => setMenuOpen(false)}>
         <b>🎓 UniVolve</b>
+        <button type="button" className="nav-toggle" aria-label="Toggle menu" aria-expanded={menuOpen} onClick={(e) => { e.stopPropagation(); setMenuOpen(o => !o); }}>{menuOpen ? "✕" : "☰"}</button>
         <Link to="/">Events</Link>
         <Link to="/requests">Volunteer Requests</Link>
         <Link to="/my-applications">My Applications</Link>
