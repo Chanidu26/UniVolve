@@ -9,10 +9,11 @@ export default function VolunteerPickerModal({ onPick, onClose, title = 'Assign 
 
   useEffect(() => { api.get('/users').then(r => setVolunteers(r.data)); }, []);
 
-  const filtered = volunteers.filter(v => v.id !== excludeUserId &&
-    v.full_name.toLowerCase().includes(search.toLowerCase()) ||
-    v.email.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = volunteers.filter(v => {
+    if (v.id === excludeUserId) return false;
+    const query = search.toLowerCase();
+    return v.full_name.toLowerCase().includes(query) || v.email.toLowerCase().includes(query);
+  });
 
   return (
     <div className="modal-overlay" onClick={onClose}>

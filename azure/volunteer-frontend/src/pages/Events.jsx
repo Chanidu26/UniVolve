@@ -53,14 +53,16 @@ export default function Events({ user }) {
 
           {e.roles.length > 0 && (
             <table style={{ marginTop: 18 }}>
-              <thead><tr><th>Role</th><th>Slots</th><th></th></tr></thead>
+              <thead><tr><th>Role</th><th>Slots</th>{user?.id !== e.organizer_id && <th></th>}</tr></thead>
               <tbody>
                 {e.roles.map(r => (
                   <tr key={r.id}>
                     <td>{r.role_name}{r.description && <div style={{ color: '#666', fontSize: 12.5, marginTop: 2 }}>{r.description}</div>}</td>
                     <td>{r.filled_slots}/{r.total_slots}</td>
-                    <td style={{ textAlign: 'right' }}><button disabled={r.filled_slots >= r.total_slots} onClick={() => apply(r.id)}>
-                      {r.filled_slots >= r.total_slots ? 'Full' : 'Apply'}</button></td>
+                    {user?.id !== e.organizer_id && (
+                      <td style={{ textAlign: 'right' }}><button disabled={r.filled_slots >= r.total_slots} onClick={() => apply(r.id)}>
+                        {r.filled_slots >= r.total_slots ? 'Full' : 'Apply'}</button></td>
+                    )}
                   </tr>
                 ))}
               </tbody>
