@@ -1,9 +1,10 @@
 const { Pool } = require('pg');
 const { DefaultAzureCredential } = require('@azure/identity');
 const { SecretClient } = require('@azure/keyvault-secrets');
+const fs = require('fs');
+const path = require('path');
 
 let pool;
-
 
 async function getDbPassword() {
   if (process.env.DB_PASSWORD) return process.env.DB_PASSWORD;
@@ -15,13 +16,9 @@ async function getDbPassword() {
 
 async function initializeSchema() {
   try {
-    const credential = new DefaultAzureCredential();
-    const client = new SecretClient(process.env.KEY_VAULT_URI, credential);
-    
-    const schemaSecret = await client.getSecret('db-schema');
-    const schema = schemaSecret.value;
-    
-    // The schema is idempotent and also contains additive migrations for existing databases.
+    const schemaPath = path.join(__dirname, 'schema.sql');
+    const schema = fs.readFileSync(schemaPath, 'utf8');
+
     console.log('📊 Applying database schema and migrations...');
     await pool.query(schema);
     console.log('✅ Schema and migrations applied successfully');
