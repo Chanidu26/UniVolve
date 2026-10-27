@@ -38,7 +38,7 @@ exports.list = async (req, res) => {
   const { rows } = await pool.query(`
     SELECT e.id, e.title, e.description, e.event_date, e.location, e.status,
       e.image_url, e.created_by, e.organizer_id, e.created_at,
-      CASE WHEN $${params.length + 1} OR e.organizer_id = $${params.length + 1}
+      CASE WHEN $${params.length + 1}::boolean OR e.organizer_id = $${params.length + 2}::uuid
         THEN e.attendance_code ELSE NULL END AS attendance_code,
       u.full_name AS organizer_name, u.profile_picture_url AS organizer_picture,
       COALESCE(json_agg(json_build_object(
