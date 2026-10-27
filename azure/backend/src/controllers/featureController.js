@@ -7,11 +7,12 @@ exports.checkAttendance = async (req, res) => {
   }
 
   const { rows: applications } = await pool.query(`
-    SELECT a.id AS application_id, e.attendance_code
+    SELECT a.id AS application_id, e.attendance_code, e.organizer_id
     FROM applications a
     JOIN event_roles r ON r.id = a.event_role_id
     JOIN events e ON e.id = r.event_id
-    WHERE e.id=$1 AND a.volunteer_id=$2 AND a.status='APPROVED'`, [event_id, req.user.sub]);
+    WHERE e.id=$1 AND a.volunteer_id=$2 AND a.status='APPROVED'
+      AND e.organizer_id IS DISTINCT FROM $2`, [event_id, req.user.sub]);
   const application = applications[0];
   if (!application || application.attendance_code !== code) {
     return res.status(403).json({ error: 'Invalid attendance code or approved application required' });
@@ -36,7 +37,9 @@ exports.mineAttendance = async (req, res) => {
     LEFT JOIN attendance a ON a.application_id=ap.id
     JOIN event_roles r ON r.id=ap.event_role_id
     JOIN events e ON e.id=r.event_id
-    WHERE ap.volunteer_id=$1 AND ap.status='APPROVED' ORDER BY e.event_date DESC`, [req.user.sub]);
+    WHERE ap.volunteer_id=$1 AND ap.status='APPROVED'
+      AND e.organizer_id IS DISTINCT FROM $1
+    ORDER BY e.event_date DESC`, [req.user.sub]);
   res.json(rows);
 };
 

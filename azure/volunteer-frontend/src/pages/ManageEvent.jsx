@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import api from '../api/client.js';
 import UserChip from '../components/UserChip.jsx';
 import VolunteerPickerModal from '../components/VolunteerPickerModal.jsx';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function ManageEvent() {
   const { id } = useParams();
@@ -11,10 +12,15 @@ export default function ManageEvent() {
   const [role, setRole] = useState({ role_name: '', description: '', total_slots: 5 });
   const [inviteRoleId, setInviteRoleId] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [event, setEvent] = useState(null);
 
   const load = () => {
     api.get(`/events/${id}/applications`).then(r => setApps(r.data));
-    api.get('/events').then(r => setRoles(r.data.find(e => e.id === id)?.roles || []));
+    api.get('/events').then(r => {
+      const current = r.data.find(e => e.id === id);
+      setEvent(current);
+      setRoles(current?.roles || []);
+    });
   };
   useEffect(() => {
     api.get('/auth/me').then(r => setCurrentUser(r.data));
@@ -54,6 +60,19 @@ export default function ManageEvent() {
       )}
 
       <h2 style={{ marginBottom: 16 }}>Manage Event</h2>
+
+      {event?.attendance_code && (currentUser?.system_role === 'SUPER_ADMIN' || currentUser?.id === event.organizer_id) && (
+        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <QRCodeSVG value={`${window.location.origin}/attendance/${event.id}?code=${event.attendance_code}`} size={150} />
+          <div>
+            <h3>Attendance QR code</h3>
+            <p style={{ color: 'var(--ink-soft)', marginTop: 8 }}>
+              Volunteers scan or enter this event code to check in and out.
+            </p>
+            <code>{event.attendance_code}</code>
+          </div>
+        </div>
+      )}
 
       {roles.length > 0 && (
         <div className="card">
