@@ -36,7 +36,11 @@ exports.list = async (req, res) => {
   if (status && admin) { params.push(status); filters.push(`e.status = $${params.length}`); }
   if (date) { params.push(date); filters.push(`e.event_date::date = $${params.length}::date`); }
   const { rows } = await pool.query(`
-    SELECT e.*, u.full_name AS organizer_name, u.profile_picture_url AS organizer_picture,
+    SELECT e.id, e.title, e.description, e.event_date, e.location, e.status,
+      e.image_url, e.created_by, e.organizer_id, e.created_at,
+      CASE WHEN $${params.length + 1}::boolean OR e.organizer_id = $${params.length + 2}::uuid
+        THEN e.attendance_code ELSE NULL END AS attendance_code,
+      u.full_name AS organizer_name, u.profile_picture_url AS organizer_picture,
       COALESCE(json_agg(json_build_object(
         'id', r.id, 'role_name', r.role_name, 'description', r.description,
         'total_slots', r.total_slots, 'filled_slots', r.filled_slots
@@ -46,7 +50,7 @@ exports.list = async (req, res) => {
     LEFT JOIN event_roles r ON r.event_id = e.id
     ${filters.length ? `WHERE ${filters.join(' AND ')}` : ''}
     GROUP BY e.id, u.full_name, u.profile_picture_url
-    ORDER BY e.event_date ASC`, params);
+    ORDER BY e.event_date ASC`, [...params, admin, req.user.sub]);
   res.json(rows);
 };
 
