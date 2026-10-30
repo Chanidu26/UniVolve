@@ -6,6 +6,7 @@ const path = require('path');
 
 let pool;
 
+
 async function getDbPassword() {
   if (process.env.DB_PASSWORD) return process.env.DB_PASSWORD;
 

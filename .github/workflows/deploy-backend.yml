@@ -25,9 +25,6 @@ jobs:
           docker push ${{ secrets.ACR_NAME }}.azurecr.io/univolve-backend:${{ github.sha }}
           docker push ${{ secrets.ACR_NAME }}.azurecr.io/univolve-backend:latest
 
-
-          docker tag ${{ secrets.ACR_NAME }}.azurecr.io/univolve-backend:latest ${{ secrets.DOCKERHUB_USERNAME }}/univolve-backend-5:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/univolve-backend-5:latest
       - name: Update Container App
         run: |
           az containerapp update \
