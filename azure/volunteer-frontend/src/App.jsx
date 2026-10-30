@@ -12,7 +12,6 @@ import VolunteerDirectory from './pages/VolunteerDirectory.jsx';
 import RecommendSomeone from './pages/RecommendSomeone.jsx';
 import api from './api/client.js';
 
-
 export default function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('vms_token'));
